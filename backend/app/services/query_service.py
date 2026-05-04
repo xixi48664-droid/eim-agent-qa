@@ -22,7 +22,14 @@ class QueryService:
         )
 
         records = [
-            ComponentSummary.model_validate(c).model_dump() for c in components
+            ComponentSummary(
+                componentId=c.component_id,
+                model=c.model,
+                type=c.type or "",
+                packageType=c.package_type or "",
+                manufacturer=c.manufacturer or "",
+            ).model_dump()
+            for c in components
         ]
         return {
             "pageNum": pageNum,
@@ -55,5 +62,5 @@ class QueryService:
             coreParams=coreParams if coreParams else None,
             datasheetUrl=component.datasheet_url,
             imageUrl=component.image_url,
-            updatedAt=component.create_time,
+            updatedAt=component.update_time or component.create_time,
         )

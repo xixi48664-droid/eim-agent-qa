@@ -1,12 +1,13 @@
 from typing import Optional, Tuple, List
 from datetime import datetime
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from app.entities.user import User
+from app.entities.operation_log import OperationLog
 
 
 class UserRepository:
-    """用户数据访问 — 对应设计文档 4.16 UserRepository 类"""
+    """用户数据访问 — 对应设计文档 4.17 UserRepository 类"""
 
     def __init__(self, db: Session):
         self._db = db
@@ -66,3 +67,54 @@ class UserRepository:
         self._db.commit()
         self._db.refresh(user)
         return user
+
+    def findByUsername(self, username: str) -> Optional[User]:
+        """按用户名精确查询"""
+        return self._db.query(User).filter(User.username == username).first()
+
+    def findByEmail(self, email: str) -> Optional[User]:
+        """按邮箱精确查询"""
+        return self._db.query(User).filter(User.email == email).first()
+
+    def findByPhone(self, phone: str) -> Optional[User]:
+        """按手机号精确查询"""
+        return self._db.query(User).filter(User.phone == phone).first()
+
+    def countOperationsByUser(self, user_id: str) -> int:
+        """统计用户总操作次数"""
+        return (
+            self._db.query(func.count(OperationLog.log_id))
+            .filter(OperationLog.user_id == user_id)
+            .scalar()
+        ) or 0
+
+    def countOperationsByType(self, user_id: str, operation_type: str) -> int:
+        """统计用户某类操作次数"""
+        return (
+            self._db.query(func.count(OperationLog.log_id))
+            .filter(
+                OperationLog.user_id == user_id,
+                OperationLog.operation_type == operation_type,
+            )
+            .scalar()
+        ) or 0
+
+    def batchUpdateStatus(self, user_ids: list[str], status: str) -> int:
+        """批量修改用户状态"""
+        count = (
+            self._db.query(User)
+            .filter(User.user_id.in_(user_ids))
+            .update({User.status: status}, synchronize_session=False)
+        )
+        self._db.commit()
+        return count
+
+    def batchDelete(self, user_ids: list[str]) -> int:
+        """批量删除用户"""
+        count = (
+            self._db.query(User)
+            .filter(User.user_id.in_(user_ids))
+            .delete(synchronize_session=False)
+        )
+        self._db.commit()
+        return count

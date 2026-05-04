@@ -8,7 +8,7 @@ def _gen_id() -> str:
 
 
 class OperationLog(Base):
-    """操作日志 — 对应设计文档 4.29 OperationLog 类 & 表9"""
+    """操作日志 — 对应设计文档 4.30 OperationLog 类 & 表9"""
     __tablename__ = "operation_log"
 
     log_id = Column(String(32), primary_key=True, default=_gen_id)
@@ -17,3 +17,4 @@ class OperationLog(Base):
     operation_target = Column(String(100), nullable=True)
     operation_time = Column(DateTime, server_default=func.now(), nullable=False)
     operation_result = Column(String(50), nullable=True)
+    response_time_ms = Column(String(20), nullable=True)
