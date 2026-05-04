@@ -67,10 +67,12 @@ const handleLogin = async () => {
 
 <style scoped>
 .login-page {
+  width: 100%;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   padding: 24px;
   background: linear-gradient(135deg, #eef4ff 0%, #f7f9fc 100%);
 }

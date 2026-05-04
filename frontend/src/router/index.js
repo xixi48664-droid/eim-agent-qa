@@ -3,15 +3,46 @@ import { useAuthStore } from '../stores/auth'
 
 const routes = [
   {
-    path: '/',
-    name: 'home',
-    component: () => import('../views/Home.vue'),
-    meta: { requiresAuth: true },           // 需要登录才能访问
-  },
-  {
-    path: '/login',         // 登录页面
+    path: '/login',
     name: 'login',
     component: () => import('../views/Login.vue'),
+  },
+  {
+    path: '/',
+    component: () => import('../layouts/UserLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'home',
+        component: () => import('../views/Home.vue'),
+      },
+      {
+        path: 'photo-recognition',
+        name: 'photo-recognition',
+        component: () => import('../views/PhotoRecognition.vue'),
+      },
+      {
+        path: 'parameter-query',
+        name: 'parameter-query',
+        component: () => import('../views/ParameterQuery.vue'),
+      },
+      {
+        path: 'spec-qa',
+        name: 'spec-qa',
+        component: () => import('../views/SpecQA.vue'),
+      },
+      {
+        path: 'process-guide',
+        name: 'process-guide',
+        component: () => import('../views/ProcessGuide.vue'),
+      },
+      {
+        path: 'history',
+        name: 'history',
+        component: () => import('../views/History.vue'),
+      },
+    ],
   },
 ]
 
@@ -24,11 +55,11 @@ router.beforeEach((to) => {
   const authStore = useAuthStore()
 
   if (to.meta.requiresAuth && !authStore.token) {
-    return '/login'          //如果需要登录但未登录，则重定向到登录页面
+    return '/login'
   }
 
   if (to.path === '/login' && authStore.token) {
-    return '/'              //如果已经登录，则重定向到首页
+    return '/'
   }
 
   return true

@@ -1,76 +1,61 @@
-<script setup>
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
-
-const router = useRouter()
-const authStore = useAuthStore()
-
-const userName = computed(() => authStore.userInfo?.nickname || '游客')
-
-const handleLogout = async () => {
-  authStore.clearAuth()
-  await router.push('/login')
-}
-</script>
-
 <template>
-  <el-container class="layout-shell">
-    <el-aside width="220px" class="sidebar">
-      <div class="brand">EIM Agent QA</div>
-      <el-menu default-active="1" class="menu">
-        <el-menu-item index="1">首页</el-menu-item>
-      </el-menu>
-    </el-aside>
+  <div class="home-page">
+    <el-card class="hero-card">
+      <div class="hero-title">主问答</div>
+      <div class="hero-desc">这是用户端首页入口，后续在这里接入写死问答和智能引导。</div>
+    </el-card>
 
-    <el-container>
-      <el-header class="header">
-        <div>欢迎你，{{ userName }}</div>
-        <el-button type="danger" plain @click="handleLogout">退出登录</el-button>
-      </el-header>
+    <el-card class="quick-card">
+      <template #header>
+        <div class="section-title">快捷入口</div>
+      </template>
 
-      <el-main class="main-content">
-        <el-card>
-          <h1>基础布局已完成</h1>
-          <p>下一步可以开始接入第一个写死的业务模块页面。</p>
-        </el-card>
-      </el-main>
-    </el-container>
-  </el-container>
+      <div class="quick-grid">
+        <div class="quick-item">拍照识件</div>
+        <div class="quick-item">参数查询</div>
+        <div class="quick-item">规范问答</div>
+        <div class="quick-item">流程指导</div>
+      </div>
+    </el-card>
+  </div>
 </template>
 
 <style scoped>
-.layout-shell {
-  min-height: 100vh;
-  background: #f5f7fb;
+.home-page {
+  display: grid;
+  gap: 16px;
 }
 
-.sidebar {
-  background: #1f2937;
-  color: #fff;
-  padding: 20px 16px;
+.hero-card {
+  min-height: 180px;
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
 }
 
-.brand {
-  font-size: 20px;
+.hero-title {
+  font-size: 28px;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
-.menu {
-  border-right: none;
-  background: transparent;
+.hero-desc {
+  color: #6b7280;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+.section-title {
+  font-weight: 600;
 }
 
-.main-content {
-  padding: 24px;
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.quick-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 18px;
+  background: #f9fbff;
+  text-align: center;
 }
 </style>
