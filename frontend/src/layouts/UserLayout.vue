@@ -7,7 +7,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const userName = computed(() => authStore.userInfo?.nickname || '游客')
+const userName = computed(() => authStore.userInfo?.nickname || authStore.userInfo?.account || '游客')
 
 const menuItems = [
   { index: '/', label: '主问答' },
