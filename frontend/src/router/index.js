@@ -6,6 +6,7 @@ const routes = [
     path: '/login',
     name: 'login',
     component: () => import('../views/Login.vue'),
+    meta: { public: true },
   },
   {
     path: '/',
@@ -53,12 +54,13 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const authStore = useAuthStore()
+  authStore.hydrateAuth()
 
-  if (to.meta.requiresAuth && !authStore.token) {
+  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
     return '/login'
   }
 
-  if (to.path === '/login' && authStore.token) {
+  if (to.path === '/login' && authStore.isLoggedIn) {
     return '/'
   }
 

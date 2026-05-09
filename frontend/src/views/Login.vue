@@ -9,23 +9,31 @@ const router = useRouter()
 const authStore = useAuthStore()
 const loading = ref(false)
 
+// 响应式：输入框输入（默认值）
 const form = reactive({
-  username: 'admin',
-  password: '123456',
+  account: 'admin@example.com',
+  password: 'admin123',
 })
 
+// 表单校验
 const loginRules = {
-  username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
+  account: [{ required: true, message: '请输入账号', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 }
 
+// 登录处理函数
 const handleLogin = async () => {
   loading.value = true
   try {
     const res = await loginApi(form)
     authStore.setToken(res.data.token)
-    authStore.setUserInfo(res.data.userInfo)
-    ElMessage.success(`欢迎，${res.data.userInfo.nickname}`)
+    authStore.setUserInfo({
+      userId: res.data.userId,
+      account: res.data.account,
+      role: res.data.role,
+      status: res.data.status,
+    })
+    ElMessage.success('登录成功')
     await router.push('/')
   } catch (error) {
     ElMessage.error(error.message || '登录失败')
@@ -40,16 +48,16 @@ const handleLogin = async () => {
     <div class="login-card">
       <div class="login-title">
         <h1>欢迎登录</h1>
-        <p>请输入写死账号进行登录验证</p>
+        <p>请输入账号密码进行登录验证</p>
       </div>
 
       <el-form :model="form" :rules="loginRules" label-position="top" @submit.prevent>
-        <el-form-item label="账号" prop="username">
-          <el-input v-model="form.username" placeholder="admin 或 user" />
+        <el-form-item label="账号" prop="account">
+          <el-input v-model="form.account" placeholder="admin@example.com" />
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
-          <el-input v-model="form.password" type="password" show-password placeholder="123456" />
+          <el-input v-model="form.password" type="password" show-password placeholder="admin123" />
         </el-form-item>
 
         <el-button type="primary" :loading="loading" class="login-btn" @click="handleLogin">
@@ -58,8 +66,8 @@ const handleLogin = async () => {
       </el-form>
 
       <div class="tips">
-        <p>管理员：admin / 123456</p>
-        <p>普通用户：user / 123456</p>
+        <p>管理员：admin@example.com / admin123</p>
+        <p>普通用户：user@example.com / user123</p>
       </div>
     </div>
   </div>
