@@ -8,6 +8,7 @@ class UserRecord(BaseModel):
     userId: str = Field(validation_alias="user_id")
     username: str
     email: str = ""
+    role: str = ""
     status: str
     registerTime: Optional[datetime] = Field(default=None, validation_alias="create_time")
     lastLoginTime: Optional[datetime] = Field(default=None, validation_alias="last_login_time")

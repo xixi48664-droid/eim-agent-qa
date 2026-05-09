@@ -2,16 +2,12 @@
 import { computed, reactive, ref } from 'vue'
 import {
   searchComponentsApi,
-  searchComponentsFallbackApi,
   getComponentDetailApi,
-  getComponentDetailFallbackApi,
 } from '../api/parameter'
 import { ElMessage } from 'element-plus'
 
 const loading = ref(false)
 const detailLoading = ref(false)
-const hasRealListApi = ref(true)
-const hasRealDetailApi = ref(true)
 const tableData = ref([])
 const total = ref(0)
 const selectedDetail = ref(null)
@@ -35,8 +31,7 @@ const pageCount = computed(() => Math.max(1, Math.ceil(total.value / queryForm.p
 const loadList = async () => {
   loading.value = true
   try {
-    const api = hasRealListApi.value ? searchComponentsApi : searchComponentsFallbackApi
-    const res = await api({ ...queryForm })
+    const res = await searchComponentsApi({ ...queryForm })
     const data = res.data || {}
     tableData.value = data.records || data.list || []
     total.value = data.total || 0
@@ -45,11 +40,6 @@ const loadList = async () => {
       selectedDetail.value = null
     }
   } catch (error) {
-    if (hasRealListApi.value) {
-      hasRealListApi.value = false
-      ElMessage.warning('真实查询接口暂不可用，已切换为写死数据占位')
-      return loadList()
-    }
     ElMessage.error(error.message || '查询失败')
   } finally {
     loading.value = false
@@ -82,17 +72,9 @@ const handleSizeChange = (size) => {
 const handleRowClick = async (row) => {
   detailLoading.value = true
   try {
-    const api = hasRealDetailApi.value ? getComponentDetailApi : getComponentDetailFallbackApi
-    const res = await api(row.componentId)
+    const res = await getComponentDetailApi(row.componentId)
     selectedDetail.value = res.data
   } catch (error) {
-    if (hasRealDetailApi.value) {
-      hasRealDetailApi.value = false
-      ElMessage.warning('元器件详情接口暂不可用，已切换为写死数据占位')
-      const fallbackRes = await getComponentDetailFallbackApi(row.componentId)
-      selectedDetail.value = fallbackRes.data
-      return
-    }
     ElMessage.error(error.message || '获取详情失败')
   } finally {
     detailLoading.value = false
@@ -108,7 +90,6 @@ loadList()
       <template #header>
         <div class="card-header">
           <span>参数查询</span>
-          <span class="hint">支持真实接口联调，若接口未就绪则自动回退写死数据</span>
         </div>
       </template>
 

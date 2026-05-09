@@ -44,7 +44,7 @@ const handleLogin = async () => {
         nickname: res.data.nickname || res.data.account,
       })
       ElMessage.success(`欢迎，${res.data.nickname || res.data.account}`)
-      await router.push('/')
+      await router.push(res.data.role === 'admin' ? '/admin' : '/')
     } catch {
       // 错误消息由 request 拦截器统一处理
     } finally {
