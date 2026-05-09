@@ -11,8 +11,8 @@ const loading = ref(false)
 const formRef = ref()
 
 const form = reactive({
-  account: 'admin@example.com',
-  password: '123456',
+  account: '',
+  password: '',
 })
 
 const loginRules = {
@@ -67,11 +67,11 @@ const goResetPassword = () => router.push('/reset-password')
 
       <el-form ref="formRef" :model="form" :rules="loginRules" label-position="top" @submit.prevent>
         <el-form-item label="账号" prop="account">
-          <el-input v-model="form.account" placeholder="admin@example.com" clearable />
+          <el-input v-model="form.account" placeholder="请输入邮箱或手机号" clearable />
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
-          <el-input v-model="form.password" type="password" show-password placeholder="密码" />
+          <el-input v-model="form.password" type="password" show-password placeholder="请输入密码" />
         </el-form-item>
 
         <div class="form-links">
@@ -85,8 +85,6 @@ const goResetPassword = () => router.push('/reset-password')
       </el-form>
 
       <div class="tips">
-        <p>管理员：admin@example.com / 123456</p>
-        <p>普通用户：user@example.com / 123456</p>
         <p class="forgot-link">
           <router-link to="/reset-password">忘记密码？</router-link>
         </p>
