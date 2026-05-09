@@ -10,12 +10,12 @@ const authStore = useAuthStore()
 const loading = ref(false)
 
 const form = reactive({
-  username: 'admin',
+  account: 'admin@example.com',
   password: '123456',
 })
 
 const loginRules = {
-  username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
+  account: [{ required: true, message: '请输入邮箱或手机号', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 }
 
@@ -23,12 +23,18 @@ const handleLogin = async () => {
   loading.value = true
   try {
     const res = await loginApi(form)
-    authStore.setToken(res.data.token)
-    authStore.setUserInfo(res.data.userInfo)
-    ElMessage.success(`欢迎，${res.data.userInfo.nickname}`)
+    authStore.setAuth({
+      token: res.data.token,
+      userId: res.data.userId,
+      account: res.data.account,
+      role: res.data.role,
+      status: res.data.status,
+      nickname: res.data.nickname || res.data.account,
+    })
+    ElMessage.success(`欢迎，${res.data.nickname || res.data.account}`)
     await router.push('/')
   } catch (error) {
-    ElMessage.error(error.message || '登录失败')
+    // 错误消息由 request 拦截器统一处理
   } finally {
     loading.value = false
   }
@@ -40,16 +46,16 @@ const handleLogin = async () => {
     <div class="login-card">
       <div class="login-title">
         <h1>欢迎登录</h1>
-        <p>请输入写死账号进行登录验证</p>
+        <p>请输入邮箱或手机号登录</p>
       </div>
 
       <el-form :model="form" :rules="loginRules" label-position="top" @submit.prevent>
-        <el-form-item label="账号" prop="username">
-          <el-input v-model="form.username" placeholder="admin 或 user" />
+        <el-form-item label="账号" prop="account">
+          <el-input v-model="form.account" placeholder="邮箱或手机号" clearable />
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
-          <el-input v-model="form.password" type="password" show-password placeholder="123456" />
+          <el-input v-model="form.password" type="password" show-password placeholder="密码" />
         </el-form-item>
 
         <el-button type="primary" :loading="loading" class="login-btn" @click="handleLogin">
@@ -58,8 +64,11 @@ const handleLogin = async () => {
       </el-form>
 
       <div class="tips">
-        <p>管理员：admin / 123456</p>
-        <p>普通用户：user / 123456</p>
+        <p>管理员：admin@example.com / 123456</p>
+        <p>普通用户：user@example.com / 123456</p>
+        <p class="forgot-link">
+          <router-link to="/reset-password">忘记密码？</router-link>
+        </p>
       </div>
     </div>
   </div>
@@ -112,5 +121,19 @@ const handleLogin = async () => {
   border-top: 1px solid #eef2f7;
   font-size: 14px;
   line-height: 1.8;
+}
+
+.forgot-link {
+  text-align: right;
+}
+
+.forgot-link a {
+  color: #1677ff;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.forgot-link a:hover {
+  text-decoration: underline;
 }
 </style>
