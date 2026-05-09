@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const request = axios.create({

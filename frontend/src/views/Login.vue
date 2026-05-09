@@ -8,6 +8,7 @@ import { useAuthStore } from '../stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 const loading = ref(false)
+const formRef = ref()
 
 const form = reactive({
   account: 'admin@example.com',
@@ -15,30 +16,45 @@ const form = reactive({
 })
 
 const loginRules = {
-  account: [{ required: true, message: '请输入邮箱或手机号', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  account: [
+    { required: true, message: '请输入邮箱或手机号', trigger: 'blur' },
+    { min: 6, message: '账号长度不能少于 6 个字符', trigger: 'blur' },
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于 6 个字符', trigger: 'blur' },
+  ],
 }
 
 const handleLogin = async () => {
-  loading.value = true
-  try {
-    const res = await loginApi(form)
-    authStore.setAuth({
-      token: res.data.token,
-      userId: res.data.userId,
-      account: res.data.account,
-      role: res.data.role,
-      status: res.data.status,
-      nickname: res.data.nickname || res.data.account,
-    })
-    ElMessage.success(`欢迎，${res.data.nickname || res.data.account}`)
-    await router.push('/')
-  } catch (error) {
-    // 错误消息由 request 拦截器统一处理
-  } finally {
-    loading.value = false
-  }
+  if (!formRef.value) return
+
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return
+
+    loading.value = true
+    try {
+      const res = await loginApi(form)
+      authStore.setAuth({
+        token: res.data.token,
+        userId: res.data.userId,
+        account: res.data.account,
+        role: res.data.role,
+        status: res.data.status,
+        nickname: res.data.nickname || res.data.account,
+      })
+      ElMessage.success(`欢迎，${res.data.nickname || res.data.account}`)
+      await router.push('/')
+    } catch {
+      // 错误消息由 request 拦截器统一处理
+    } finally {
+      loading.value = false
+    }
+  })
 }
+
+const goRegister = () => router.push('/register')
+const goResetPassword = () => router.push('/reset-password')
 </script>
 
 <template>
@@ -49,14 +65,19 @@ const handleLogin = async () => {
         <p>请输入邮箱或手机号登录</p>
       </div>
 
-      <el-form :model="form" :rules="loginRules" label-position="top" @submit.prevent>
+      <el-form ref="formRef" :model="form" :rules="loginRules" label-position="top" @submit.prevent>
         <el-form-item label="账号" prop="account">
-          <el-input v-model="form.account" placeholder="邮箱或手机号" clearable />
+          <el-input v-model="form.account" placeholder="admin@example.com" clearable />
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
           <el-input v-model="form.password" type="password" show-password placeholder="密码" />
         </el-form-item>
+
+        <div class="form-links">
+          <el-button link type="primary" @click="goRegister">注册账号</el-button>
+          <el-button link type="primary" @click="goResetPassword">忘记密码</el-button>
+        </div>
 
         <el-button type="primary" :loading="loading" class="login-btn" @click="handleLogin">
           登录
@@ -108,6 +129,13 @@ const handleLogin = async () => {
 
 .login-title {
   margin-bottom: 24px;
+}
+
+.form-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 4px 0 12px;
 }
 
 .login-btn {
