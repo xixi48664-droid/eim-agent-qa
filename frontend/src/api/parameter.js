@@ -2,46 +2,77 @@ import request from './request'
 
 const mockComponentList = [
   {
-    componentId: 'c001',
+    componentId: 'a7996aa05a6646c784769505d36316ae',
     model: 'STM32F103C8T6',
     type: 'MCU',
     packageType: 'LQFP48',
-    manufacturer: 'ST',
-    updatedAt: '2026-05-08 10:00:00',
+    manufacturer: 'STMicroelectronics',
   },
   {
-    componentId: 'c002',
+    componentId: 'b2c3d4e5f6a7412ab3c4d5e6f7a81234',
     model: 'LM358',
     type: '运放',
     packageType: 'SOP-8',
     manufacturer: 'TI',
-    updatedAt: '2026-05-08 10:12:00',
   },
   {
-    componentId: 'c003',
+    componentId: 'c3d4e5f6a7b8412cb4d5e6f7a8b92345',
     model: 'AMS1117-3.3',
     type: '稳压器',
     packageType: 'SOT-223',
     manufacturer: 'AMS',
-    updatedAt: '2026-05-08 10:25:00',
   },
 ]
 
-const mockComponentDetail = {
-  componentId: 'c001',
-  model: 'STM32F103C8T6',
-  type: 'MCU',
-  packageType: 'LQFP48',
-  manufacturer: 'ST',
-  coreParams: {
-    flash: '64KB',
-    sram: '20KB',
-    maxFreq: '72MHz',
-    ioCount: '37',
+const mockComponentDetailMap = {
+  a7996aa05a6646c784769505d36316ae: {
+    componentId: 'a7996aa05a6646c784769505d36316ae',
+    model: 'STM32F103C8T6',
+    type: 'MCU',
+    packageType: 'LQFP48',
+    manufacturer: 'STMicroelectronics',
+    coreParams: {
+      Flash: '64KB',
+      引脚数: '48',
+      工作电压: '2.0~3.6V',
+      RAM: '20KB',
+      主频: '72MHz',
+      内核: 'ARM Cortex-M3',
+    },
+    datasheetUrl: 'https://www.st.com/resource/en/datasheet/stm32f103c8.pdf',
+    imageUrl: null,
+    updatedAt: '2026-05-06T14:35:48',
   },
-  datasheetUrl: '',
-  imageUrl: '',
-  updatedAt: '2026-05-08 10:00:00',
+  b2c3d4e5f6a7412ab3c4d5e6f7a81234: {
+    componentId: 'b2c3d4e5f6a7412ab3c4d5e6f7a81234',
+    model: 'LM358',
+    type: '运放',
+    packageType: 'SOP-8',
+    manufacturer: 'TI',
+    coreParams: {
+      '供电电压': '3V~32V',
+      '带宽': '1MHz',
+      '静态电流': '0.7mA',
+    },
+    datasheetUrl: null,
+    imageUrl: null,
+    updatedAt: '2026-05-06T15:10:00',
+  },
+  c3d4e5f6a7b8412cb4d5e6f7a8b92345: {
+    componentId: 'c3d4e5f6a7b8412cb4d5e6f7a8b92345',
+    model: 'AMS1117-3.3',
+    type: '稳压器',
+    packageType: 'SOT-223',
+    manufacturer: 'AMS',
+    coreParams: {
+      '输出电压': '3.3V',
+      '输出电流': '1A',
+      '压差': '1.3V',
+    },
+    datasheetUrl: null,
+    imageUrl: null,
+    updatedAt: '2026-05-06T15:25:00',
+  },
 }
 
 export const searchComponentsApi = async ({ keyword, pageNum = 1, pageSize = 10 }) => {
@@ -87,6 +118,6 @@ export const getComponentDetailFallbackApi = async (componentId) => {
   return {
     code: 200,
     message: '查询成功',
-    data: mockComponentDetail.componentId === componentId ? mockComponentDetail : null,
+    data: mockComponentDetailMap[componentId] || null,
   }
 }

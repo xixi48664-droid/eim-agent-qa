@@ -15,6 +15,7 @@ const form = reactive({
   password: 'admin123',
 })
 
+//表单校验规则
 const loginRules = {
   account: [
     { required: true, message: '请输入账号', trigger: 'blur' },
@@ -26,6 +27,7 @@ const loginRules = {
   ],
 }
 
+//登录处理函数
 const handleLogin = async () => {
   if (!formRef.value) return
 
@@ -37,7 +39,7 @@ const handleLogin = async () => {
       const res = await loginApi(form)
       authStore.setToken(res.data.token)
       authStore.setUserInfo({
-        userId: res.data.userId,
+        userId: res.data.userid || res.data.userId,
         account: res.data.account,
         role: res.data.role,
         status: res.data.status,
@@ -52,7 +54,9 @@ const handleLogin = async () => {
   })
 }
 
+//跳转到注册页面
 const goRegister = () => router.push('/register')
+
 const goResetPassword = () => router.push('/reset-password')
 </script>
 

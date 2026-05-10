@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
 import {
   searchComponentsApi,
   searchComponentsFallbackApi,
@@ -15,6 +15,7 @@ const hasRealDetailApi = ref(true)
 const tableData = ref([])
 const total = ref(0)
 const selectedDetail = ref(null)
+const queryHistory = ref([])
 
 const queryForm = reactive({
   keyword: '',
@@ -27,29 +28,47 @@ const columns = [
   { prop: 'type', label: '类型' },
   { prop: 'packageType', label: '封装' },
   { prop: 'manufacturer', label: '厂商' },
-  { prop: 'updatedAt', label: '更新时间' },
 ]
-
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / queryForm.pageSize)))
+
+const saveMessage = (message) => {
+  queryHistory.value.unshift({
+    time: new Date().toLocaleString(),
+    message,
+  })
+}
 
 const loadList = async () => {
   loading.value = true
   try {
-    const api = hasRealListApi.value ? searchComponentsApi : searchComponentsFallbackApi
-    const res = await api({ ...queryForm })
+    const keyword = queryForm.keyword.trim()
+    const shouldUseFallback = !keyword || !hasRealListApi.value
+    const api = shouldUseFallback ? searchComponentsFallbackApi : searchComponentsApi
+    // keyword 为空时后端会返回 400，因此空关键词只走写死数据，不调用真实接口
+    const res = await api({ ...queryForm, keyword })
     const data = res.data || {}
     tableData.value = data.records || data.list || []
     total.value = data.total || 0
 
-    if (selectedDetail.value && !tableData.value.some((item) => item.componentId === selectedDetail.value.componentId)) {
+    const message = `查询关键词：${queryForm.keyword || '全部'}，返回 ${total.value} 条结果`
+    saveMessage(message)
+
+    if (
+      selectedDetail.value &&
+      !tableData.value.some((item) => item.componentId === selectedDetail.value.componentId)
+    ) {
       selectedDetail.value = null
+    }
+
+    if (tableData.value.length && !selectedDetail.value) {
+      await handleRowClick(tableData.value[0])
     }
   } catch (error) {
     if (hasRealListApi.value) {
       hasRealListApi.value = false
       ElMessage.warning('真实查询接口暂不可用，已切换为写死数据占位')
       return loadList()
-    }
+    }           //如果真实接口报错
     ElMessage.error(error.message || '查询失败')
   } finally {
     loading.value = false
@@ -99,7 +118,9 @@ const handleRowClick = async (row) => {
   }
 }
 
-loadList()
+onMounted(() => {
+  loadList()
+})
 </script>
 
 <template>
@@ -141,11 +162,13 @@ loadList()
             highlight-current-row
             @row-click="handleRowClick"
           >
-            <el-table-column prop="model" label="型号" min-width="170" />
-            <el-table-column prop="type" label="类型" min-width="100" />
-            <el-table-column prop="packageType" label="封装" min-width="100" />
-            <el-table-column prop="manufacturer" label="厂商" min-width="120" />
-            <el-table-column prop="updatedAt" label="更新时间" min-width="160" />
+            <el-table-column
+              v-for="column in columns"
+              :key="column.prop"
+              :prop="column.prop"
+              :label="column.label"
+              min-width="120"
+            />
           </el-table>
 
           <div class="pagination-wrap">
@@ -156,6 +179,7 @@ loadList()
               :page-size="queryForm.pageSize"
               :page-sizes="[10, 20, 50, 100]"
               :total="total"
+              :page-count="pageCount"
               @current-change="handleCurrentChange"
               @size-change="handleSizeChange"
             />
@@ -182,12 +206,25 @@ loadList()
                 <el-descriptions-item label="类型">{{ selectedDetail.type }}</el-descriptions-item>
                 <el-descriptions-item label="封装">{{ selectedDetail.packageType }}</el-descriptions-item>
                 <el-descriptions-item label="厂商">{{ selectedDetail.manufacturer }}</el-descriptions-item>
-                <el-descriptions-item label="更新时间">{{ selectedDetail.updatedAt }}</el-descriptions-item>
+                <el-descriptions-item label="数据手册">
+                  <el-link v-if="selectedDetail.datasheetUrl" :href="selectedDetail.datasheetUrl" target="_blank">
+                    查看
+                  </el-link>
+                  <span v-else>暂无</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="图片">
+                  <span>{{ selectedDetail.imageUrl || '暂无' }}</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="创建时间">{{ selectedDetail.updatedAt }}</el-descriptions-item>
               </el-descriptions>
 
               <div class="params-title">核心参数</div>
               <el-descriptions :column="1" border>
-                <el-descriptions-item v-for="(value, key) in selectedDetail.coreParams" :key="key" :label="key">
+                <el-descriptions-item
+                  v-for="(value, key) in selectedDetail.coreParams"
+                  :key="key"
+                  :label="key"
+                >
                   {{ value }}
                 </el-descriptions-item>
               </el-descriptions>
@@ -198,6 +235,21 @@ loadList()
         </el-card>
       </el-col>
     </el-row>
+
+    <el-card class="history-card">
+      <template #header>
+        <div class="table-header">
+          <span>查询历史</span>
+          <span class="meta">保存最近查询记录</span>
+        </div>
+      </template>
+      <el-timeline v-if="queryHistory.length">
+        <el-timeline-item v-for="(item, index) in queryHistory" :key="index" :timestamp="item.time">
+          {{ item.message }}
+        </el-timeline-item>
+      </el-timeline>
+      <el-empty v-else description="暂无查询记录" />
+    </el-card>
   </div>
 </template>
 
@@ -255,5 +307,9 @@ loadList()
   font-size: 15px;
   font-weight: 600;
   color: #334155;
+}
+
+.history-card {
+  margin-top: 4px;
 }
 </style>
