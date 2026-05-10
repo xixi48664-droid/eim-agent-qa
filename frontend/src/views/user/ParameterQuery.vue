@@ -5,7 +5,7 @@ import {
   searchComponentsFallbackApi,
   getComponentDetailApi,
   getComponentDetailFallbackApi,
-} from '../api/parameter'
+} from '../../api/parameter'
 import { ElMessage } from 'element-plus'
 
 const loading = ref(false)

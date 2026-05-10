@@ -2,7 +2,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { resetPasswordApi } from '../api/auth'
+import { resetPasswordApi } from '../../api/auth'
 
 const router = useRouter()
 const route = useRoute()

@@ -5,18 +5,18 @@ const routes = [
   {
     path: '/reset-password',
     name: 'reset-password',
-    component: () => import('../views/ResetPassword.vue'),
+    component: () => import('../views/user/ResetPassword.vue'),
   },
   {
     path: '/login',
     name: 'login',
-    component: () => import('../views/Login.vue'),
+    component: () => import('../views/user/Login.vue'),
     meta: { public: true },
   },
   {
     path: '/register',
     name: 'register',
-    component: () => import('../views/Register.vue'),
+    component: () => import('../views/user/Register.vue'),
     meta: { public: true },
   },
   {
@@ -27,37 +27,37 @@ const routes = [
       {
         path: '',
         name: 'home',
-        component: () => import('../views/Home.vue'),
+        component: () => import('../views/user/Home.vue'),
       },
       {
         path: 'photo-recognition',
         name: 'photo-recognition',
-        component: () => import('../views/PhotoRecognition.vue'),
+        component: () => import('../views/user/PhotoRecognition.vue'),
       },
       {
         path: 'parameter-query',
         name: 'parameter-query',
-        component: () => import('../views/ParameterQuery.vue'),
+        component: () => import('../views/user/ParameterQuery.vue'),
       },
       {
         path: 'spec-qa',
         name: 'spec-qa',
-        component: () => import('../views/SpecQA.vue'),
+        component: () => import('../views/user/SpecQA.vue'),
       },
       {
         path: 'process-guide',
         name: 'process-guide',
-        component: () => import('../views/ProcessGuide.vue'),
+        component: () => import('../views/user/ProcessGuide.vue'),
       },
       {
         path: 'history',
         name: 'history',
-        component: () => import('../views/History.vue'),
+        component: () => import('../views/user/History.vue'),
       },
       {
         path: 'detail',
         name: 'detail',
-        component: () => import('../views/DetailView.vue'),
+        component: () => import('../views/admin/DetailView.vue'),
       },
     ],
   },
