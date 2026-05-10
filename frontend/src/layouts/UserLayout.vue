@@ -7,7 +7,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const userName = computed(() => authStore.userInfo?.nickname || authStore.userInfo?.account || '游客')
+const userName = computed(() => authStore.nickname || authStore.account || '游客')
 
 const menuItems = [
   { index: '/', label: '主问答' },
@@ -16,7 +16,11 @@ const menuItems = [
   { index: '/spec-qa', label: '规范问答' },
   { index: '/process-guide', label: '流程指导' },
   { index: '/history', label: '历史记录' },
+  { index: '/reset-password', label: '重置密码' },
+  { index: '/detail', label: '查看详情' },
 ]
+
+const isAdmin = computed(() => authStore.isAdmin)
 
 const handleMenuSelect = (index) => {
   if (index !== route.path) {
@@ -43,7 +47,7 @@ const handleLogout = () => {
       <div class="topbar-actions">
         <span class="welcome">你好，{{ userName }}</span>
         <el-button class="topbar-text-btn" text>帮助</el-button>
-        <el-button class="topbar-text-btn" text>个人中心</el-button>
+        <el-button class="topbar-text-btn" text @click="router.push('/detail')">个人中心</el-button>
         <el-button class="logout-btn" type="danger" plain @click="handleLogout">退出</el-button>
       </div>
     </el-header>
@@ -62,6 +66,21 @@ const handleLogout = () => {
           >
             <el-menu-item v-for="item in menuItems" :key="item.index" :index="item.index">
               {{ item.label }}
+            </el-menu-item>
+
+            <div v-if="isAdmin" class="nav-divider">
+              <span class="nav-divider-text">系统</span>
+            </div>
+
+            <el-menu-item v-if="isAdmin" index="/admin/users">
+              <span class="menu-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                  <path d="M4.93 4.93a10 10 0 0 0 0 14.14"/>
+                </svg>
+              </span>
+              管理后台
             </el-menu-item>
           </el-menu>
         </div>
@@ -205,6 +224,24 @@ const handleLogout = () => {
 
 :deep(.el-menu-item:hover) {
   background: #f2f7ff;
+}
+
+.nav-divider {
+  padding: 16px 22px 4px;
+}
+
+.nav-divider-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.menu-icon {
+  display: flex;
+  align-items: center;
+  margin-right: 6px;
 }
 
 .content-area {

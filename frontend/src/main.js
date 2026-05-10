@@ -12,4 +12,7 @@ app.use(createPinia())
 app.use(router)
 app.use(ElementPlus)
 
+// 挂载 router 引用，供 request 拦截器在非组件上下文中使用
+window.__VUE_APP_ROUTER__ = router
+
 app.mount('#app')
