@@ -10,7 +10,7 @@ class QueryService:
         self._componentRepository = component_repo
 
     def searchByKeyword(
-        self, keyword: str, pageNum: int = 1, pageSize: int = 10
+        self, keyword: str, pageNum: int = 1, pageSize: int = 10, type: str = None
     ) -> dict:
         """根据关键词查询元器件 — 对应设计文档 QueryService.searchByKeyword"""
         keyword = keyword.strip()
@@ -18,12 +18,21 @@ class QueryService:
             raise ValueError("关键词不能为空")
 
         components, total = self._componentRepository.searchByKeyword(
-            keyword, pageNum, pageSize
+            keyword, pageNum, pageSize, type
         )
 
-        records = [
-            ComponentSummary.model_validate(c).model_dump() for c in components
-        ]
+        records = []
+        for c in components:
+            params = self._componentRepository.getParams(c.component_id)
+            coreParams = {}
+            for p in params:
+                value = p.param_value
+                if p.param_unit:
+                    value = f"{p.param_value}{p.param_unit}"
+                coreParams[p.param_name] = value
+            summary = ComponentSummary.model_validate(c).model_dump()
+            summary["coreParams"] = coreParams if coreParams else None
+            records.append(summary)
         return {
             "pageNum": pageNum,
             "pageSize": pageSize,

@@ -10,14 +10,7 @@ const authStore = useAuthStore()
 const userName = computed(() => authStore.nickname || authStore.account || '游客')
 
 const menuItems = [
-  { index: '/', label: '主问答' },
-  { index: '/photo-recognition', label: '拍照识件' },
   { index: '/parameter-query', label: '参数查询' },
-  { index: '/spec-qa', label: '规范问答' },
-  { index: '/process-guide', label: '流程指导' },
-  { index: '/history', label: '历史记录' },
-  { index: '/reset-password', label: '重置密码' },
-  { index: '/detail', label: '查看详情' },
 ]
 
 const isAdmin = computed(() => authStore.isAdmin)
@@ -38,7 +31,22 @@ const handleLogout = () => {
   <el-container class="user-layout">
     <el-header class="topbar">
       <div class="brand-wrap">
-        <div class="brand-logo">E</div>
+        <div class="brand-logo">
+          <svg width="26" height="26" viewBox="0 0 48 48" fill="none">
+            <rect x="4" y="8" width="40" height="32" rx="4" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="8" y="14" width="14" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <rect x="26" y="14" width="14" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <rect x="8" y="26" width="8" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <rect x="20" y="26" width="8" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <rect x="32" y="24" width="8" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <circle cx="12" cy="12" r="1" fill="currentColor" opacity="0.6"/>
+            <circle cx="24" cy="12" r="1" fill="currentColor" opacity="0.6"/>
+            <circle cx="36" cy="12" r="1" fill="currentColor" opacity="0.6"/>
+            <line x1="12" y1="4" x2="12" y2="8" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+            <line x1="24" y1="4" x2="24" y2="8" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+            <line x1="36" y1="4" x2="36" y2="8" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+          </svg>
+        </div>
         <div class="brand-text">
           <div class="brand-title">电子信息制造业多模态问答系统</div>
         </div>
@@ -47,7 +55,6 @@ const handleLogout = () => {
       <div class="topbar-actions">
         <span class="welcome">你好，{{ userName }}</span>
         <el-button class="topbar-text-btn" text>帮助</el-button>
-        <el-button class="topbar-text-btn" text @click="router.push('/detail')">个人中心</el-button>
         <el-button class="logout-btn" type="danger" plain @click="handleLogout">退出</el-button>
       </div>
     </el-header>
@@ -122,12 +129,11 @@ const handleLogout = () => {
 .brand-logo {
   width: 42px;
   height: 42px;
-  border-radius: 12px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.18);
-  font-weight: 700;
-  font-size: 18px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
   flex: 0 0 auto;
 }
 

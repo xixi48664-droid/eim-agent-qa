@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/v1/components", tags=["参数查询"])
 @router.get("/search")
 def searchByKeyword(
     keyword: str = Query(..., description="元器件型号或关键词"),
+    type: Optional[str] = Query(None, description="元器件类型筛选"),
     pageNum: int = Query(1, ge=1, description="页码"),
     pageSize: int = Query(10, ge=1, le=100, description="每页条数"),
     db: Session = Depends(get_db),
@@ -28,7 +29,7 @@ def searchByKeyword(
     query_service = QueryService(component_repo)
 
     try:
-        result = query_service.searchByKeyword(keyword, pageNum, pageSize)
+        result = query_service.searchByKeyword(keyword, pageNum, pageSize, type)
         if result["total"] == 0:
             return error(404, "未查询到匹配的元器件")
         return success(data=result, message="查询成功")

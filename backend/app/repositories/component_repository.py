@@ -23,16 +23,20 @@ class ComponentRepository:
         )
 
     def searchByKeyword(
-        self, keyword: str, pageNum: int = 1, pageSize: int = 10
+        self, keyword: str, pageNum: int = 1, pageSize: int = 10, type: str = None
     ) -> Tuple[List[Component], int]:
         """按关键词模糊查询 — 对应设计文档 searchByKeyword"""
-        query = self._db.query(Component).filter(
+        filters = [
             or_(
                 Component.model.like(f"%{keyword}%"),
                 Component.type.like(f"%{keyword}%"),
                 Component.manufacturer.like(f"%{keyword}%"),
             )
-        )
+        ]
+        if type:
+            filters.append(Component.type == type)
+
+        query = self._db.query(Component).filter(*filters)
 
         total = query.count()
         components = (

@@ -11,8 +11,6 @@ const userName = computed(() => authStore.nickname || authStore.account || '游�
 
 const adminMenuItems = [
   { index: '/admin/users', label: '用户管理', icon: 'user' },
-  { index: '/admin/monitor', label: '服务监控', icon: 'monitor' },
-  { index: '/admin/knowledge', label: '知识库管理', icon: 'book' },
 ]
 
 const activeMenu = computed(() => route.path)
@@ -34,18 +32,30 @@ const handleLogout = () => {
     <!-- 顶部导航 -->
     <el-header class="admin-header">
       <div class="header-left">
-        <div class="brand-logo">E</div>
+        <div class="brand-logo">
+          <svg width="26" height="26" viewBox="0 0 48 48" fill="none">
+            <rect x="4" y="8" width="40" height="32" rx="4" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="8" y="14" width="14" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <rect x="26" y="14" width="14" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <rect x="8" y="26" width="8" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <rect x="20" y="26" width="8" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <rect x="32" y="24" width="8" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <circle cx="12" cy="12" r="1" fill="currentColor" opacity="0.6"/>
+            <circle cx="24" cy="12" r="1" fill="currentColor" opacity="0.6"/>
+            <circle cx="36" cy="12" r="1" fill="currentColor" opacity="0.6"/>
+            <line x1="12" y1="4" x2="12" y2="8" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+            <line x1="24" y1="4" x2="24" y2="8" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+            <line x1="36" y1="4" x2="36" y2="8" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+          </svg>
+        </div>
         <div class="brand-info">
           <span class="brand-title">电子信息制造业多模态问答系统</span>
-          <span class="brand-sub">管理后台</span>
         </div>
       </div>
 
       <div class="header-right">
         <span class="welcome-text">你好，{{ userName }}</span>
         <div class="header-divider"></div>
-        <el-button class="header-btn" text>个人中心</el-button>
-        <el-button class="header-btn" text>帮助</el-button>
         <el-button class="header-btn exit-btn" text @click="handleLogout">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -136,12 +146,10 @@ const handleLogout = () => {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 18px;
   color: #fff;
   flex-shrink: 0;
 }
@@ -244,8 +252,8 @@ const handleLogout = () => {
   font-weight: 600;
 }
 
-:deep(.el-menu-item:hover:not(.is-active)) {
-  background: #f8fafc;
+:deep(.el-menu-item:hover) {
+  background: #f2f7ff;
 }
 
 .menu-icon {

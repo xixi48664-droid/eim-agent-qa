@@ -10,6 +10,7 @@ class ComponentSummary(BaseModel):
     type: str = ""
     packageType: str = Field(default="", validation_alias="package_type")
     manufacturer: str = ""
+    coreParams: Optional[Dict[str, str]] = None
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 

@@ -1,8 +1,8 @@
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getUserList, toggleUserStatus, resetUserPassword } from '../../api/admin/user'
-import { getUserLogs } from '../../api/admin/logs'
+import { getUserLogs } from '../../api/admin/user'
 
 // 列表状态
 const tableData = ref([])
@@ -15,33 +15,6 @@ const pageSize = ref(10)
 const filterUsername = ref('')
 const filterEmail = ref('')
 const filterStatus = ref('')
-
-// 新增/编辑弹窗
-const dialogVisible = ref(false)
-const dialogTitle = ref('添加用户')
-const formRef = ref(null)
-const submitting = ref(false)
-const editingId = ref(null)
-
-const form = reactive({
-  account: '',
-  nickname: '',
-  role: 'user',
-  dept: '',
-})
-
-const formRules = {
-  account: [
-    { required: true, message: '请输入邮箱或手机号', trigger: 'blur' },
-    {
-      pattern: /^[\w.-]+@[\w.-]+\.\w+$|^\d{11}$/,
-      message: '请输入正确的邮箱地址或11位手机号',
-      trigger: 'blur',
-    },
-  ],
-  nickname: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-  role: [{ required: true, message: '请选择角色', trigger: 'change' }],
-}
 
 // 操作日志抽屉
 const logDrawerVisible = ref(false)
@@ -59,16 +32,6 @@ const operationTypeOptions = [
   { value: 'query', label: '参数查询' },
   { value: 'recognize', label: '拍照识别' },
   { value: 'qa', label: '问答' },
-]
-
-const deptOptions = [
-  '生产技术部', 'SMT生产线', '质量检测部', '信息技术部',
-  '产品测试部', '研发部', '采购部', '销售部',
-]
-
-const roleOptions = [
-  { value: 'user', label: '普通用户' },
-  { value: 'admin', label: '管理员' },
 ]
 
 // 加载用户列表
@@ -115,32 +78,6 @@ const resetFilters = () => {
   filterStatus.value = ''
   currentPage.value = 1
   fetchUsers()
-}
-
-// 打开新增弹窗
-const openAddDialog = () => {
-  editingId.value = null
-  dialogTitle.value = '添加用户'
-  Object.assign(form, { account: '', nickname: '', role: 'user', dept: '' })
-  dialogVisible.value = true
-}
-
-// 提交表单
-const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
-  if (!valid) return
-  submitting.value = true
-  try {
-    // TODO: 调用实际新增接口
-    // await addUser({ ...form })
-    ElMessage.success('添加成功')
-    dialogVisible.value = false
-    fetchUsers()
-  } catch {
-    // 错误由拦截器处理
-  } finally {
-    submitting.value = false
-  }
 }
 
 // 启用/禁用
@@ -233,12 +170,6 @@ onMounted(() => {
         <h2>用户管理</h2>
         <span class="total-count">共 {{ total }} 位用户</span>
       </div>
-      <el-button type="primary" @click="openAddDialog">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        添加用户
-      </el-button>
     </div>
 
     <!-- 筛选栏 -->
@@ -348,32 +279,6 @@ onMounted(() => {
         />
       </div>
     </div>
-
-    <!-- 新增用户弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="520px" :close-on-click-modal="false">
-      <el-form ref="formRef" :model="form" :rules="formRules" label-width="90px">
-        <el-form-item label="账号" prop="account">
-          <el-input v-model="form.account" placeholder="邮箱或手机号" />
-        </el-form-item>
-        <el-form-item label="姓名" prop="nickname">
-          <el-input v-model="form.nickname" placeholder="真实姓名或昵称" />
-        </el-form-item>
-        <el-form-item label="角色" prop="role">
-          <el-select v-model="form.role" style="width:100%">
-            <el-option v-for="r in roleOptions" :key="r.value" :label="r.label" :value="r.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="部门" prop="dept">
-          <el-select v-model="form.dept" placeholder="请选择部门" style="width:100%" allow-create filterable clearable>
-            <el-option v-for="d in deptOptions" :key="d" :label="d" :value="d" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">确认</el-button>
-      </template>
-    </el-dialog>
 
     <!-- 操作日志抽屉 -->
     <el-drawer
