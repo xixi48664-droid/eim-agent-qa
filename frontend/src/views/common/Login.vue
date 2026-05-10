@@ -45,7 +45,8 @@ const handleLogin = async () => {
         status: res.data.status,
       })
       ElMessage.success('登录成功')
-      await router.push('/')
+      const isAdmin = res.data.role === 'admin'
+      await router.push(isAdmin ? '/admin' : '/')
     } catch (error) {
       ElMessage.error(error.message || '登录失败')
     } finally {

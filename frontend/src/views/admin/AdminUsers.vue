@@ -170,9 +170,9 @@ const handleResetPassword = async (row) => {
       { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' },
     )
     const res = await resetUserPassword(row.userId)
-    ElMessage.success(`密码已重置${res.data?.tempPassword ? `，新密码：${res.data.tempPassword}` : '成功'}`)
-  } catch {
-    // 用户取消或错误
+    ElMessage.success(`密码已重置，新密码：${res.data?.tempPassword || res.data?.password || '请告知用户'}`)
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error(e.message || '重置失败，请重试')
   }
 }
 

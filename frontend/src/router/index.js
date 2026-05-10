@@ -106,6 +106,10 @@ router.beforeEach((to) => {
     return '/'
   }
 
+  if (to.path === '/' && authStore.role === 'admin') {
+    return '/admin'
+  }
+
   if (to.path === '/login' && authStore.token) {
     return '/'
   }
