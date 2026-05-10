@@ -5,18 +5,18 @@ const routes = [
   {
     path: '/reset-password',
     name: 'reset-password',
-    component: () => import('../views/user/ResetPassword.vue'),
+    component: () => import('../views/common/ResetPassword.vue'),
   },
   {
     path: '/login',
     name: 'login',
-    component: () => import('../views/user/Login.vue'),
+    component: () => import('../views/common/Login.vue'),
     meta: { public: true },
   },
   {
     path: '/register',
     name: 'register',
-    component: () => import('../views/user/Register.vue'),
+    component: () => import('../views/common/Register.vue'),
     meta: { public: true },
   },
   {
