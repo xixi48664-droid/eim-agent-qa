@@ -2,6 +2,7 @@
 参数查询接口 — 对应设计文档 4.3 QaController 类
 """
 
+from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.db.mysql import get_db
