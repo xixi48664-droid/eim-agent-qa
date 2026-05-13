@@ -19,6 +19,7 @@ class Component(Base):
     datasheet_url = Column(String(255), nullable=True)
     image_url = Column(String(255), nullable=True)
     create_time = Column(DateTime, server_default=func.now())
+    update_time = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     params = relationship("ComponentParam", back_populates="component")
 

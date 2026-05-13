@@ -5,7 +5,7 @@ from app.entities.component_info import Component, ComponentParam
 
 
 class ComponentRepository:
-    """元器件数据访问 — 对应设计文档 4.17 ComponentRepository 类"""
+    """元器件数据访问 — 对应设计文档 4.18 ComponentRepository 类"""
 
     def __init__(self, db: Session):
         self._db = db
@@ -61,3 +61,54 @@ class ComponentRepository:
         self._db.commit()
         self._db.refresh(component)
         return component
+
+    def update(self, component: Component) -> Component:
+        """更新元器件记录"""
+        self._db.commit()
+        self._db.refresh(component)
+        return component
+
+    def delete(self, component: Component) -> None:
+        """删除元器件记录"""
+        self._db.delete(component)
+        self._db.commit()
+
+    def deleteParams(self, component_id: str) -> None:
+        """删除元器件所有参数"""
+        self._db.query(ComponentParam).filter(
+            ComponentParam.component_id == component_id
+        ).delete()
+        self._db.commit()
+
+    def saveParams(self, params: List[ComponentParam]) -> None:
+        """批量保存参数"""
+        for p in params:
+            self._db.add(p)
+        self._db.commit()
+
+    def searchAdmin(
+        self,
+        model: Optional[str] = None,
+        type: Optional[str] = None,
+        manufacturer: Optional[str] = None,
+        pageNum: int = 1,
+        pageSize: int = 10,
+    ) -> Tuple[List[Component], int]:
+        """管理员分页查询元器件"""
+        query = self._db.query(Component)
+
+        if model:
+            query = query.filter(Component.model.like(f"%{model}%"))
+        if type:
+            query = query.filter(Component.type.like(f"%{type}%"))
+        if manufacturer:
+            query = query.filter(Component.manufacturer.like(f"%{manufacturer}%"))
+
+        total = query.count()
+        components = (
+            query.order_by(Component.update_time.desc())
+            .offset((pageNum - 1) * pageSize)
+            .limit(pageSize)
+            .all()
+        )
+        return components, total

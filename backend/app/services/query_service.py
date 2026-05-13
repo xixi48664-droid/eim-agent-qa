@@ -30,8 +30,14 @@ class QueryService:
                 if p.param_unit:
                     value = f"{p.param_value}{p.param_unit}"
                 coreParams[p.param_name] = value
-            summary = ComponentSummary.model_validate(c).model_dump()
-            summary["coreParams"] = coreParams if coreParams else None
+            summary = ComponentSummary(
+                componentId=c.component_id,
+                model=c.model,
+                type=c.type or "",
+                packageType=c.package_type or "",
+                manufacturer=c.manufacturer or "",
+                coreParams=coreParams if coreParams else None,
+            ).model_dump()
             records.append(summary)
         return {
             "pageNum": pageNum,
@@ -64,5 +70,5 @@ class QueryService:
             coreParams=coreParams if coreParams else None,
             datasheetUrl=component.datasheet_url,
             imageUrl=component.image_url,
-            updatedAt=component.create_time,
+            updatedAt=component.update_time or component.create_time,
         )
