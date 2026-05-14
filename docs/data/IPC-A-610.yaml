@@ -1,0 +1,7 @@
+- standard_code: IPC-A-610
+  standard_name: Acceptability of Electronic Assemblies
+  section: ''
+  summary: 该规范在电子信息制造业中重点用于SMT 贴装、回流焊、波峰焊、手工焊和焊点验收。当前未获取到官网 PDF/正文目录中的真实章节号和章节名称，section 按录入规则留空；应用时应从正式标准文本提炼工艺参数、试验条件、验收判据、记录要求和不合格处置要求，并转换为作业指导书、检验规范、设备点检项目或质量审核清单。对涉及客户等级、产品等级、可靠性等级或法规合规的条款，应在项目导入、首件确认、量产巡检和出货评审中保持一致引用。
+    来源：https://www.ipc.org/search?search=IPC-A-610
+  tags: SMT,焊接,品质验收,IPC标准
+  related_process: 回流焊,波峰焊,手工焊

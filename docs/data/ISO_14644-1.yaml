@@ -1,0 +1,7 @@
+- standard_code: ISO 14644-1
+  standard_name: Cleanrooms and associated controlled environments - Classification of air cleanliness by particle concentration
+  section: ''
+  summary: 该规范在电子信息制造业中重点用于半导体器件选型、来料验证、湿敏/可靠性控制和失效判定。当前未获取到官网 PDF/正文目录中的真实章节号和章节名称，section 按录入规则留空；应用时应从正式标准文本提炼工艺参数、试验条件、验收判据、记录要求和不合格处置要求，并转换为作业指导书、检验规范、设备点检项目或质量审核清单。对涉及客户等级、产品等级、可靠性等级或法规合规的条款，应在项目导入、首件确认、量产巡检和出货评审中保持一致引用。
+    来源：https://www.iso.org/search.html?q=ISO%2014644-1
+  tags: 洁净室,ISO标准
+  related_process: 洁净室管理,生产装配

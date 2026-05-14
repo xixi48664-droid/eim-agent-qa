@@ -1,0 +1,7 @@
+- standard_code: GB/T 43059-2023
+  standard_name: 印制板及印制板组装件的平整度控制要求
+  section: ''
+  summary: 该规范在电子信息制造业中重点用于PCB 设计、制板、来料检验和组装件质量确认。当前未获取到官网 PDF/正文目录中的真实章节号和章节名称，section 按录入规则留空；应用时应从正式标准文本提炼工艺参数、试验条件、验收判据、记录要求和不合格处置要求，并转换为作业指导书、检验规范、设备点检项目或质量审核清单。对涉及客户等级、产品等级、可靠性等级或法规合规的条款，应在项目导入、首件确认、量产巡检和出货评审中保持一致引用。
+    来源：https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=277CBA033FC25B3D8DBF6908D59ABEB8
+  tags: PCB设计,PCB制造,来料检验,GB标准,国家标准
+  related_process: PCB设计,PCB制造,PCB来料检验
