@@ -10,6 +10,8 @@ class ComponentSummary(BaseModel):
     type: str = ""
     packageType: str = ""
     manufacturer: str = ""
+    coreParams: Optional[Dict[str, str]] = None
+    imageUrl: Optional[str] = None
 
     model_config = ConfigDict(populate_by_name=True)
 

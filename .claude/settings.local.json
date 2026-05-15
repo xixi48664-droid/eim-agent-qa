@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python scripts/import_datasheets_to_qdrant.py --category \"MCU/MPU\" --limit 5 --resume)",
+      "Bash(python -c ' *)"
+    ]
+  }
+}

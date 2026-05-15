@@ -16,6 +16,9 @@ venv/
 *.swp
 *.swo
 
+# Qdrant 数据（本地模式/Docker）
+backend/data/
+
 # 系统文件
 .DS_Store
 Thumbs.db

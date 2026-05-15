@@ -11,15 +11,25 @@ from app.external.model_client import ModelClient
 
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data", "qdrant")
-EMBEDDING_DIM = 1024  # text-embedding-v3 输出维度
+EMBEDDING_DIM = 1024  # text-embedding-v4 输出维度
 COLLECTION_NAME = "knowledge"
+
+_qdrant_client = None
+
+
+def get_qdrant_client() -> QdrantClient:
+    """返回进程内唯一的 QdrantClient 实例"""
+    global _qdrant_client
+    if _qdrant_client is None:
+        _qdrant_client = QdrantClient(host="localhost", port=6333, timeout=60)
+    return _qdrant_client
 
 
 class VectorStoreClient:
     """封装与 Qdrant 向量数据库之间的交互"""
 
     def __init__(self):
-        self._client = QdrantClient(path=DATA_DIR)
+        self._client = get_qdrant_client()
         self._modelClient = ModelClient()
         self._ensureCollection()
 

@@ -2,6 +2,7 @@
 参数查询与问答接口 — 对应设计文档 4.3 QaController 类
 """
 import uuid
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.orm import Session
@@ -33,6 +34,7 @@ standards_router = APIRouter(prefix="/api/v1/standards", tags=["智能问答"])
 @router.get("/search")
 def searchByKeyword(
     keyword: str = Query(..., description="元器件型号或关键词"),
+    type: Optional[str] = Query(None, description="元器件类型筛选"),
     pageNum: int = Query(1, ge=1, description="页码"),
     pageSize: int = Query(10, ge=1, le=100, description="每页条数"),
     db: Session = Depends(get_db),
@@ -45,7 +47,7 @@ def searchByKeyword(
     query_service = QueryService(component_repo)
 
     try:
-        result = query_service.searchByKeyword(keyword, pageNum, pageSize)
+        result = query_service.searchByKeyword(keyword, pageNum, pageSize, type)
 
         log_repo = HistoryRepository(db)
         log_repo.saveOperationLog(OperationLog(
@@ -54,7 +56,6 @@ def searchByKeyword(
             operation_target=keyword,
             operation_result="成功" if result["total"] > 0 else "无结果",
         ))
-
         if result["total"] == 0:
             return error(404, "未查询到匹配的元器件")
         return success(data=result, message="查询成功")
@@ -192,20 +193,33 @@ def _buildQaResponse(result: dict, session_id: str) -> dict:
         total = r.get("total", 0)
         records = r.get("records", [])
         if records:
-            lines = [f"找到 {total} 个相关元器件："]
-            for rec in records[:5]:
-                lines.append(
-                    f"- {rec.get('model', '')} "
-                    f"({rec.get('type', '')} | {rec.get('manufacturer', '')} "
-                    f"| {rec.get('packageType', '')})"
-                )
-            answer = "\n".join(lines)
+            generated = r.get("answer", "")
+            if generated:
+                answer = generated
+            else:
+                lines = [f"找到 {total} 个相关元器件："]
+                for rec in records[:5]:
+                    lines.append(
+                        f"- {rec.get('model', '')} "
+                        f"({rec.get('type', '')} | {rec.get('manufacturer', '')} "
+                        f"| {rec.get('packageType', '')})"
+                    )
+                answer = "\n".join(lines)
+
             for rec in records[:3]:
                 sources.append(SourceInfo(
                     sourceType="component",
                     sourceId=rec.get("componentId", ""),
                     sourceTitle=rec.get("model", ""),
                     contentSnippet=f"{rec.get('type', '')} {rec.get('manufacturer', '')}",
+                ))
+            ds_snippets = r.get("datasheetSnippets", "")
+            if ds_snippets:
+                sources.append(SourceInfo(
+                    sourceType="datasheet",
+                    sourceId=records[0].get("componentId", ""),
+                    sourceTitle=f"{records[0].get('model', '')} datasheet",
+                    contentSnippet=ds_snippets[:500],
                 ))
             recommended = [f"{rec.get('model', '')}的详细参数？" for rec in records[:3]]
         else:
