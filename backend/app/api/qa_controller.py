@@ -2,6 +2,7 @@
 参数查询与问答接口 — 对应设计文档 4.3 QaController 类
 """
 import uuid
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.orm import Session
