@@ -39,6 +39,7 @@ const handleLogout = () => {
           <span class="brand-title">电子信息制造业多模态问答系统</span>
           <span class="brand-sub">管理后台</span>
         </div>
+        <span class="admin-badge">管理后台</span>
       </div>
 
       <div class="header-right">
@@ -157,6 +158,13 @@ const handleLogout = () => {
   font-weight: 600;
   color: #fff;
   letter-spacing: 0.3px;
+}
+
+.admin-badge {
+  font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+  padding: 2px 10px; border-radius: 10px; white-space: nowrap;
+  letter-spacing: 0.5px;
 }
 
 .brand-sub {
