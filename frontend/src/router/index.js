@@ -3,6 +3,11 @@ import { useAuthStore } from '../stores/auth'
 
 const routes = [
   {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: () => import('../views/common/ResetPassword.vue'),
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('../views/common/Login.vue'),
@@ -11,28 +16,18 @@ const routes = [
   {
     path: '/register',
     name: 'register',
-    component: () => import('../views/Register.vue'),
-    meta: { public: true },
-  },
-  {
-    path: '/reset-password',
-    name: 'reset-password',
-    component: () => import('../views/ResetPassword.vue'),
+    component: () => import('../views/common/Register.vue'),
     meta: { public: true },
   },
   {
     path: '/',
     component: () => import('../layouts/UserLayout.vue'),
-    meta: { requiresAuth: true, requiresUser: true },
+    meta: { requiresAuth: true },
     children: [
       {
         path: '',
-        redirect: '/main-chat',
-      },
-      {
-        path: 'main-chat',
-        name: 'main-chat',
-        component: () => import('../views/user/MainChat.vue'),
+        name: 'home',
+        component: () => import('../views/user/Home.vue'),
       },
       {
         path: 'photo-recognition',
@@ -55,9 +50,14 @@ const routes = [
         component: () => import('../views/user/ProcessGuide.vue'),
       },
       {
-        path: 'history-record',
-        name: 'history-record',
-        component: () => import('../views/user/HistoryRecord.vue'),
+        path: 'history',
+        name: 'history',
+        component: () => import('../views/user/History.vue'),
+      },
+      {
+        path: 'detail',
+        name: 'detail',
+        component: () => import('../views/admin/DetailView.vue'),
       },
     ],
   },
@@ -74,6 +74,16 @@ const routes = [
         path: 'users',
         name: 'admin-users',
         component: () => import('../views/admin/AdminUsers.vue'),
+      },
+      {
+        path: 'monitor',
+        name: 'admin-monitor',
+        component: () => import('../views/admin/AdminMonitor.vue'),
+      },
+      {
+        path: 'knowledge',
+        name: 'admin-knowledge',
+        component: () => import('../views/admin/AdminKnowledge.vue'),
       },
     ],
   },
@@ -96,12 +106,12 @@ router.beforeEach((to) => {
     return '/'
   }
 
-  if (to.meta.requiresUser && authStore.role === 'admin') {
+  if (to.path === '/' && authStore.role === 'admin') {
     return '/admin'
   }
 
   if (to.path === '/login' && authStore.token) {
-    return authStore.role === 'admin' ? '/admin' : '/'
+    return '/'
   }
 
   return true
