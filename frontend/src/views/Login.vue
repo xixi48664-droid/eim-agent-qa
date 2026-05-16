@@ -2,8 +2,8 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { loginApi } from '../../api/auth'
-import { useAuthStore } from '../../stores/auth'
+import { loginApi } from '../api/auth'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -13,8 +13,8 @@ const formRef = ref()
 const form = reactive({
   account: 'admin@example.com',
   password: 'admin123',
-  role: 'admin',
-  remember: true,
+  role: '管理员',
+  rememberMe: true,
 })
 
 const loginRules = {
@@ -42,24 +42,16 @@ const handleLogin = async () => {
         password: form.password,
       })
 
-      const backendRole = res.data.role
-      if (backendRole !== form.role) {
-        ElMessage.error('所选登录身份与账号实际身份不一致')
-        return
-      }
-
-      authStore.setToken(res.data.token)
+      authStore.setToken(res.data.token, form.rememberMe)
       authStore.setUserInfo({
         userId: res.data.userid || res.data.userId,
         account: res.data.account,
-        role: backendRole,
+        role: res.data.role,
         status: res.data.status,
-        nickname: res.data.account,
       })
 
       ElMessage.success('登录成功')
-      const isAdmin = backendRole === 'admin'
-      await router.push(isAdmin ? '/admin' : '/')
+      await router.push('/')
     } catch (error) {
       ElMessage.error(error.message || '登录失败')
     } finally {
@@ -122,19 +114,18 @@ const goResetPassword = () => router.push('/reset-password')
                 show-password
                 placeholder="请输入密码（至少六位）"
                 size="large"
-                @keyup.enter="handleLogin"
               />
             </el-form-item>
 
             <el-form-item label="登录角色" prop="role">
               <el-select v-model="form.role" placeholder="请选择用户角色" size="large">
-                <el-option label="管理员" value="admin" />
-                <el-option label="普通用户" value="user" />
+                <el-option label="管理员" value="管理员" />
+                <el-option label="普通用户" value="普通用户" />
               </el-select>
             </el-form-item>
 
             <div class="login-meta">
-              <el-checkbox v-model="form.remember">记住我</el-checkbox>
+              <el-checkbox v-model="form.rememberMe">记住我</el-checkbox>
               <el-button link type="primary" class="forgot-link" @click="goResetPassword">
                 忘记密码？
               </el-button>
@@ -240,6 +231,7 @@ const goResetPassword = () => router.push('/reset-password')
   padding: 0;
   margin: 0;
   display: grid;
+  gap: 0;
 }
 
 .feature-list li {

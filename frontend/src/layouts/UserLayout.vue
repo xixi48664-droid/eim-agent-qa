@@ -10,7 +10,12 @@ const authStore = useAuthStore()
 const userName = computed(() => authStore.nickname || authStore.account || '游客')
 
 const menuItems = [
+  { index: '/main-chat', label: '主问答' },
+  { index: '/photo-recognition', label: '拍照识件' },
   { index: '/parameter-query', label: '参数查询' },
+  { index: '/spec-qa', label: '规范问答' },
+  { index: '/process-guide', label: '流程指导' },
+  { index: '/history-record', label: '历史记录' },
 ]
 
 const isAdmin = computed(() => authStore.isAdmin)

@@ -19,14 +19,24 @@ const queryForm = reactive({
 
 const categoryOptions = [
   { value: '', label: '全部类别' },
+  { value: 'MCU', label: 'MCU' },
+  { value: '运放', label: '运放' },
+  { value: '稳压器', label: '稳压器' },
+  { value: '接口芯片', label: '接口芯片' },
   { value: '电阻', label: '电阻' },
   { value: '电容', label: '电容' },
-  { value: '集成电路', label: '集成电路' },
-  { value: '晶体管', label: '晶体管' },
 ]
 
+const validateSearchCondition = (_rule, _value, callback) => {
+  if (!queryForm.keyword.trim() && !queryForm.category) {
+    callback(new Error('请输入关键词或选择类别'))
+    return
+  }
+  callback()
+}
+
 const rules = {
-  keyword: [{ required: true, message: '请输入型号或关键词', trigger: 'blur' }],
+  keyword: [{ validator: validateSearchCondition, trigger: 'blur' }],
 }
 
 const formRef = ref(null)
@@ -44,6 +54,45 @@ const getParam = (row, name) => {
   return null
 }
 
+const formatCsvCell = (value) => {
+  const text = value === null || value === undefined || value === '' ? '—' : String(value)
+  return `"${text.replaceAll('"', '""')}"`
+}
+
+const handleExportData = () => {
+  if (!tableData.value.length) {
+    ElMessage.warning('暂无可导出的数据，请先查询元器件参数')
+    return
+  }
+
+  const headers = ['型号', '厂商', '封装', '额定电压', '额定电流', '功率']
+  const rows = tableData.value.map((row) => [
+    row.model,
+    row.manufacturer,
+    row.packageType,
+    getParam(row, '额定电压') || getParam(row, '电压'),
+    getParam(row, '额定电流') || getParam(row, '电流'),
+    getParam(row, '功率'),
+  ])
+
+  const csvContent = [headers, ...rows]
+    .map((line) => line.map(formatCsvCell).join(','))
+    .join('\n')
+  const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  const keyword = queryForm.keyword.trim() || '全部'
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
+
+  link.href = url
+  link.download = `元器件参数_${keyword}_${timestamp}.csv`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+  ElMessage.success('数据导出成功')
+}
+
 const loadList = async () => {
   loading.value = true
   try {
@@ -59,7 +108,8 @@ const loadList = async () => {
 }
 
 const handleSearch = async () => {
-  await formRef.value?.validate()
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (!valid) return
   queryForm.pageNum = 1
   loadList()
 }
@@ -116,8 +166,8 @@ onMounted(() => {
             @keyup.enter="handleSearch"
           />
         </el-form-item>
-        <el-form-item>
-          <el-select v-model="queryForm.category" placeholder="全部类别" class="category-select">
+        <el-form-item prop="keyword">
+          <el-select v-model="queryForm.category" placeholder="全部类别" class="category-select" clearable>
             <el-option
               v-for="opt in categoryOptions"
               :key="opt.value"
@@ -142,7 +192,7 @@ onMounted(() => {
     <el-card class="table-card">
       <div class="table-header-bar">
         <span class="table-title">元器件参数表</span>
-        <el-button text type="primary">
+        <el-button text type="primary" :disabled="!tableData.length" @click="handleExportData">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
