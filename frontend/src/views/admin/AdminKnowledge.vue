@@ -132,7 +132,7 @@ const handleDelete = async (row) => {
       cancelButtonText: '取消',
       type: 'warning',
     })
-    await deleteKnowledge(row.id)
+    await deleteKnowledge(row.id, row)
     ElMessage.success('删除成功')
     fetchData()
   } catch {

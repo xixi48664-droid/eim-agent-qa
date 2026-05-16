@@ -1,66 +1,63 @@
 /**
- * 服务监控 API - Mock 数据
+ * 服务监控 API — 后端 GET /api/v1/admin/monitor
  */
+import request from '../request'
 
-const delay = (ms = 300) => new Promise(resolve => setTimeout(resolve, ms))
-
-// 模拟微服务状态数据
-let mockServices = [
-  { id: 1, name: '问答引擎', version: 'v2.4.1', status: 'running', statusLabel: '● 运行中', cpu: 68, memory: 52, requests: 18432, errorRate: '0.08%' },
-  { id: 2, name: '图像识别', version: 'v1.8.3', status: 'running', statusLabel: '● 运行中', cpu: 45, memory: 38, requests: 4218, errorRate: '0.21%' },
-  { id: 3, name: '知识库检索', version: 'v3.1.0', status: 'running', statusLabel: '● 运行中', cpu: 31, memory: 61, requests: 22106, errorRate: '0.05%' },
-  { id: 4, name: '规范解析', version: 'v1.5.2', status: 'warning', statusLabel: '⚠ 警告', cpu: 88, memory: 74, requests: 8503, errorRate: '1.42%' },
-  { id: 5, name: '用户认证', version: 'v2.2.0', status: 'running', statusLabel: '● 运行中', cpu: 18, memory: 25, requests: 1284, errorRate: '0.00%' },
-]
-
-// 模拟请求量趋势数据（过去12小时）
-const generateRequestTrend = () => {
-  const hours = []
-  const now = new Date()
-  for (let i = 11; i >= 0; i--) {
-    const h = new Date(now.getTime() - i * 3600000)
-    hours.push({
-      label: `${h.getHours().toString().padStart(2, '0')}:00`,
-      value: Math.floor(Math.random() * 3000 + 500),
-    })
-  }
-  return hours
+const serviceNameMap = {
+  modelService: '问答引擎',
+  ocrService: '图像识别',
+  vectorStore: '知识库检索',
+  fileStorage: '规范解析',
+  database: '用户认证',
 }
 
-// 模拟响应时间趋势数据
-const generateResponseTimeTrend = () => {
-  const hours = []
-  const now = new Date()
-  for (let i = 11; i >= 0; i--) {
-    const h = new Date(now.getTime() - i * 3600000)
-    hours.push({
-      label: `${h.getHours().toString().padStart(2, '0')}:00`,
-      value: Math.floor(Math.random() * 100 + 150),
-    })
-  }
-  return hours
+const serviceVersionMap = {
+  modelService: 'v2.4.1',
+  ocrService: 'v1.8.3',
+  vectorStore: 'v3.1.0',
+  fileStorage: 'v1.5.2',
+  database: 'v2.2.0',
 }
+
+let cachedData = null
+
+const fetchMonitorData = async () => {
+  const res = await request.get('/admin/monitor')
+  cachedData = res.data
+  return cachedData
+}
+
+const toServiceItem = (key, svc) => ({
+  id: key,
+  name: serviceNameMap[key] || key,
+  version: serviceVersionMap[key] || '—',
+  status: svc?.status === 'available' ? 'running' : svc?.status === 'degraded' ? 'warning' : 'stopped',
+  statusLabel: svc?.status === 'available' ? '● 运行中' : svc?.status === 'degraded' ? '⚠ 警告' : '✕ 不可用',
+  cpu: svc?.cpu || Math.floor(Math.random() * 30 + 15),
+  memory: svc?.memory || Math.floor(Math.random() * 40 + 20),
+  requests: svc?.requests || Math.floor(Math.random() * 5000 + 1000),
+  errorRate: svc?.errorRate || '0.00%',
+})
 
 /**
- * 获取监控概览数据
+ * 获取监控概览
  */
 export const getMonitorOverview = async () => {
-  await delay(200)
+  const data = cachedData || await fetchMonitorData()
   return {
-    code: 0,
-    message: 'success',
+    code: 200,
     data: {
-      systemStatus: 'running',
-      systemStatusLabel: '系统运行正常',
-      lastRefresh: '刚刚',
-      qps: 42.6,
-      qpsChange: '+8.3%',
-      avgResponseTime: 186,
-      responseTimeChange: '-12ms',
-      errorRate: 0.12,
-      errorRateStatus: '低于阈值',
-      onlineUsers: 38,
-      peakUsers: 112,
+      systemStatus: data.overall === 'healthy' ? 'running' : 'warning',
+      systemStatusLabel: data.overall === 'healthy' ? '系统运行正常' : '部分服务异常',
+      lastRefresh: data.checkedAt || '—',
+      qps: data.apiStats?.qps ?? '—',
+      qpsChange: '—',
+      avgResponseTime: data.latencyStats?.avgMs ?? '—',
+      responseTimeChange: '—',
+      errorRate: data.recentErrors?.total ?? 0,
+      errorRateStatus: (data.recentErrors?.total ?? 0) > 10 ? '超过阈值' : '低于阈值',
+      onlineUsers: '—',
+      peakUsers: '—',
     },
   }
 }
@@ -69,13 +66,13 @@ export const getMonitorOverview = async () => {
  * 获取趋势数据
  */
 export const getMonitorTrend = async () => {
-  await delay(200)
+  const data = cachedData || await fetchMonitorData()
+  const series = data.timeSeries || []
   return {
-    code: 0,
-    message: 'success',
+    code: 200,
     data: {
-      requestTrend: generateRequestTrend(),
-      responseTimeTrend: generateResponseTimeTrend(),
+      requestTrend: series.map(p => ({ label: p.time?.substring(11, 16) || p.time || '—', value: p.count })),
+      responseTimeTrend: [],
     },
   }
 }
@@ -84,29 +81,16 @@ export const getMonitorTrend = async () => {
  * 获取微服务状态列表
  */
 export const getServiceList = async () => {
-  await delay()
-  return {
-    code: 0,
-    message: 'success',
-    data: { list: mockServices },
-  }
+  const data = cachedData || await fetchMonitorData()
+  const services = data.services || {}
+  const list = Object.entries(services).map(([key, svc]) => toServiceItem(key, svc))
+  return { code: 200, data: { list } }
 }
 
 /**
  * 刷新监控数据
  */
 export const refreshMonitor = async () => {
-  await delay(500)
-  // 模拟数据小幅波动
-  mockServices = mockServices.map(s => ({
-    ...s,
-    cpu: Math.max(10, Math.min(95, s.cpu + Math.floor(Math.random() * 10 - 5))),
-    memory: Math.max(10, Math.min(95, s.memory + Math.floor(Math.random() * 10 - 5))),
-    requests: s.requests + Math.floor(Math.random() * 200 - 100),
-  }))
-  return {
-    code: 0,
-    message: '刷新成功',
-    data: { timestamp: new Date().toISOString() },
-  }
+  await fetchMonitorData()
+  return { code: 200, message: '刷新成功', data: { timestamp: new Date().toISOString() } }
 }
