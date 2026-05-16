@@ -1,6 +1,7 @@
 /**
  * 知识库管理 API — 聚合后端 components / standards / tutorials 三组真实接口
  */
+import axios from 'axios'
 import request from '../request'
 
 const typeOptions = [
@@ -125,24 +126,30 @@ export const deleteKnowledge = async (id, row) => {
 }
 
 /**
- * 同步（暂无后端接口）
+ * 同步知识库
  */
 export const syncKnowledge = async (id) => {
-  return { code: 200, message: '同步请求已提交', data: null }
+  return await request.post(`/admin/knowledge/${id}/sync`)
 }
 
 /**
- * 导出（暂无后端接口）
+ * 导出知识库 — 使用原始 axios 避免 JSON 拦截器处理 blob
  */
 export const exportKnowledge = async (ids) => {
-  return { code: 200, message: `已导出 ${ids.length} 个知识库`, data: null }
+  const token = localStorage.getItem('eim_token')
+  return await axios.post('/api/v1/admin/knowledge/export', { ids }, {
+    responseType: 'blob',
+    headers: { Authorization: token ? `Bearer ${token}` : '' },
+  })
 }
 
 /**
- * 导入（暂无后端接口）
+ * 导入知识库
  */
 export const importKnowledge = async (formData) => {
-  return { code: 200, message: '导入成功', data: null }
+  return await request.post('/admin/knowledge/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
 }
 
 export { typeOptions }

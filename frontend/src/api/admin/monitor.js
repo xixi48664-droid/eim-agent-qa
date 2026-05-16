@@ -33,10 +33,10 @@ const toServiceItem = (key, svc) => ({
   version: serviceVersionMap[key] || '—',
   status: svc?.status === 'available' ? 'running' : svc?.status === 'degraded' ? 'warning' : 'stopped',
   statusLabel: svc?.status === 'available' ? '● 运行中' : svc?.status === 'degraded' ? '⚠ 警告' : '✕ 不可用',
-  cpu: svc?.cpu || Math.floor(Math.random() * 30 + 15),
-  memory: svc?.memory || Math.floor(Math.random() * 40 + 20),
-  requests: svc?.requests || Math.floor(Math.random() * 5000 + 1000),
-  errorRate: svc?.errorRate || '0.00%',
+  cpu: svc?.cpu ?? 0,
+  memory: svc?.memory ?? 0,
+  requests: svc?.requests ?? 0,
+  errorRate: svc?.errorRate ?? '0.00%',
 })
 
 /**
@@ -64,15 +64,20 @@ export const getMonitorOverview = async () => {
 
 /**
  * 获取趋势数据
+ *
+ * 说明：后端 GET /admin/monitor 的 timeSeries 提供逐小时请求量（用于柱状图）。
+ * 后端目前不返回逐小时响应时间序列（仅 latencyStats.avgMs 汇总值），
+ * 因此 responseTimeTrend 为空；后续后端新增接口后可自动展示。
  */
 export const getMonitorTrend = async () => {
   const data = cachedData || await fetchMonitorData()
   const series = data.timeSeries || []
+  const latencySeries = data.latencyTimeSeries || []
   return {
     code: 200,
     data: {
       requestTrend: series.map(p => ({ label: p.time?.substring(11, 16) || p.time || '—', value: p.count })),
-      responseTimeTrend: [],
+      responseTimeTrend: latencySeries.map(p => ({ label: p.time?.substring(11, 16) || p.time || '—', value: p.avgMs })),
     },
   }
 }
