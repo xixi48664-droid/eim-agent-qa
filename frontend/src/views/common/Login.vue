@@ -2,7 +2,6 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Lock } from '@element-plus/icons-vue'
 import { loginApi } from '../../api/auth'
 import { useAuthStore } from '../../stores/auth'
 
@@ -12,40 +11,54 @@ const loading = ref(false)
 const formRef = ref()
 
 const form = reactive({
-  account: '',
-  password: '',
-  remember: false,
+  account: 'admin@example.com',
+  password: 'admin123',
+  role: 'admin',
+  remember: true,
 })
 
 const loginRules = {
-  account: [{ required: true, message: '请输入账号', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  account: [
+    { required: true, message: '请输入账号', trigger: 'blur' },
+    { min: 6, message: '账号长度不能少于 6 个字符', trigger: 'blur' },
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于 6 个字符', trigger: 'blur' },
+  ],
+  role: [{ required: true, message: '请选择登录角色', trigger: 'change' }],
 }
-
-const features = [
-  '多模态图文智能问答',
-  '元器件拍照识别',
-  '参数精准查询',
-  '生产流程智能指导',
-  '行业规范问答支持',
-]
 
 const handleLogin = async () => {
   if (!formRef.value) return
+
   await formRef.value.validate(async (valid) => {
     if (!valid) return
+
     loading.value = true
     try {
-      const res = await loginApi(form)
+      const res = await loginApi({
+        account: form.account,
+        password: form.password,
+      })
+
+      const backendRole = res.data.role
+      if (backendRole !== form.role) {
+        ElMessage.error('所选登录身份与账号实际身份不一致')
+        return
+      }
+
       authStore.setToken(res.data.token)
       authStore.setUserInfo({
         userId: res.data.userid || res.data.userId,
         account: res.data.account,
-        role: res.data.role,
+        role: backendRole,
         status: res.data.status,
+        nickname: res.data.account,
       })
+
       ElMessage.success('登录成功')
-      const isAdmin = res.data.role === 'admin'
+      const isAdmin = backendRole === 'admin'
       await router.push(isAdmin ? '/admin' : '/')
     } catch (error) {
       ElMessage.error(error.message || '登录失败')
@@ -61,108 +74,85 @@ const goResetPassword = () => router.push('/reset-password')
 
 <template>
   <div class="login-page">
-    <!-- 左侧品牌区 -->
-    <div class="brand-panel">
-      <div class="brand-overlay">
-        <div class="brand-content">
-          <div class="brand-header">
-            <div class="brand-chip-icon">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <rect x="4" y="8" width="40" height="32" rx="4" stroke="currentColor" stroke-width="1.5"/>
-                <rect x="8" y="14" width="14" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
-                <rect x="26" y="14" width="14" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
-                <rect x="8" y="26" width="8" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
-                <rect x="20" y="26" width="8" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
-                <rect x="32" y="24" width="8" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
-                <circle cx="12" cy="12" r="1" fill="currentColor" opacity="0.6"/>
-                <circle cx="24" cy="12" r="1" fill="currentColor" opacity="0.6"/>
-                <circle cx="36" cy="12" r="1" fill="currentColor" opacity="0.6"/>
-                <line x1="12" y1="4" x2="12" y2="8" stroke="currentColor" stroke-width="1" opacity="0.4"/>
-                <line x1="24" y1="4" x2="24" y2="8" stroke="currentColor" stroke-width="1" opacity="0.4"/>
-                <line x1="36" y1="4" x2="36" y2="8" stroke="currentColor" stroke-width="1" opacity="0.4"/>
-              </svg>
-            </div>
-            <p class="brand-title-main">电子信息制造业</p>
-            <p class="brand-title-sub">多模态问答系统</p>
-          </div>
-
-          <div class="brand-tagline">
-            <span class="tagline-item">智能赋能电子</span>
-            <span class="tagline-divider"></span>
-            <span class="tagline-item">制造全流程</span>
-          </div>
-
-          <p class="brand-desc">
-            基于多模态大模型，为电子信息制造业提供专业的图文问答、元器件识别与工艺指导服务。
-          </p>
-
-          <ul class="feature-list">
-            <li v-for="feature in features" :key="feature" class="feature-item">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              <span>{{ feature }}</span>
-            </li>
-          </ul>
-
-          <div class="brand-footer">
-            © 2026 电子信息制造业多模态问答系统
-          </div>
+    <div class="login-card">
+      <section class="intro-panel">
+        <div class="system-brand">
+          <div class="brand-icon">▣</div>
+          <div class="brand-name">电子信息制造业<br />多模态问答系统</div>
         </div>
-      </div>
-    </div>
 
-    <!-- 右侧登录区 -->
-    <div class="login-panel">
-      <div class="login-form-wrap">
-        <div class="login-badge">安全登录</div>
-        <h1 class="login-heading">欢迎回来</h1>
-        <p class="login-subtitle">请输入您的账户信息以继续使用系统</p>
+        <h1 class="intro-title">智能赋能电子<br />制造全流程</h1>
+        <p class="intro-desc">
+          基于多模态大模型，为电子信息制造业提供专业的图文问答、元器件识别与工艺流程服务。
+        </p>
 
-        <el-form ref="formRef" :model="form" :rules="loginRules" @submit.prevent>
-          <el-form-item prop="account">
-            <el-input
-              v-model="form.account"
-              placeholder="账号"
-              size="large"
-              :prefix-icon="User"
-            />
-          </el-form-item>
+        <ul class="feature-list">
+          <li><span class="feature-icon">◎</span>多模态图文智能问答</li>
+          <li><span class="feature-icon">▣</span>元器件拍照识别</li>
+          <li><span class="feature-icon">⌕</span>参数精准查询</li>
+          <li><span class="feature-icon">⌁</span>生产流程智能指导</li>
+          <li><span class="feature-icon">□</span>行业规范问答支持</li>
+        </ul>
 
-          <el-form-item prop="password">
-            <el-input
-              v-model="form.password"
-              type="password"
-              show-password
-              placeholder="密码"
-              size="large"
-              :prefix-icon="Lock"
-              @keyup.enter="handleLogin"
-            />
-          </el-form-item>
+        <div class="intro-footer">© 2026 电子信息制造业多模态问答系统</div>
+      </section>
 
-          <div class="form-extra">
-            <el-checkbox v-model="form.remember">记住我</el-checkbox>
-            <el-button link type="primary" @click="goResetPassword">忘记密码？</el-button>
-          </div>
+      <section class="login-panel">
+        <div class="form-card">
+          <div class="form-tag">安全登录</div>
+          <h2 class="welcome-title">欢迎回来</h2>
+          <p class="welcome-subtitle">请输入您的账户信息以继续使用系统</p>
 
-          <el-button
-            type="primary"
-            :loading="loading"
-            size="large"
-            class="login-btn"
-            @click="handleLogin"
+          <el-form
+            ref="formRef"
+            :model="form"
+            :rules="loginRules"
+            label-position="top"
+            class="login-form"
+            @submit.prevent
           >
-            登录系统
-          </el-button>
-        </el-form>
+            <el-form-item label="账号" prop="account">
+              <el-input v-model="form.account" placeholder="请输入邮箱或手机号" size="large" />
+            </el-form-item>
 
-        <div class="register-hint">
-          <span>还没有账户？</span>
-          <el-button link type="primary" @click="goRegister">立即注册</el-button>
-          <span>以使用完整功能</span>
+            <el-form-item label="密码" prop="password">
+              <el-input
+                v-model="form.password"
+                type="password"
+                show-password
+                placeholder="请输入密码（至少六位）"
+                size="large"
+                @keyup.enter="handleLogin"
+              />
+            </el-form-item>
+
+            <el-form-item label="登录角色" prop="role">
+              <el-select v-model="form.role" placeholder="请选择用户角色" size="large">
+                <el-option label="管理员" value="admin" />
+                <el-option label="普通用户" value="user" />
+              </el-select>
+            </el-form-item>
+
+            <div class="login-meta">
+              <el-checkbox v-model="form.remember">记住我</el-checkbox>
+              <el-button link type="primary" class="forgot-link" @click="goResetPassword">
+                忘记密码？
+              </el-button>
+            </div>
+
+            <el-button type="primary" :loading="loading" class="login-btn" size="large" @click="handleLogin">
+              登录系统
+            </el-button>
+          </el-form>
+
+          <div class="divider-text">还没有账户？</div>
+
+          <div class="bottom-links">
+            <el-button link type="primary" @click="goRegister">立即注册</el-button>
+            <span>以使用完整功能</span>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>
@@ -172,216 +162,246 @@ const goResetPassword = () => router.push('/reset-password')
   width: 100%;
   min-height: 100vh;
   display: flex;
-}
-
-/* ===== 左侧品牌区 ===== */
-.brand-panel {
-  flex: 1;
-  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 40%, #2563eb 70%, #3b82f6 100%);
-  position: relative;
-  overflow: hidden;
-  min-width: 0;
-}
-
-.brand-panel::before {
-  content: '';
-  position: absolute;
-  top: -30%;
-  right: -15%;
-  width: 500px;
-  height: 500px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.03);
-  pointer-events: none;
-}
-
-.brand-panel::after {
-  content: '';
-  position: absolute;
-  bottom: -20%;
-  left: -10%;
-  width: 400px;
-  height: 400px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.03);
-  pointer-events: none;
-}
-
-.brand-overlay {
-  position: relative;
-  z-index: 1;
-  height: 100%;
-  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px 48px;
   box-sizing: border-box;
+  padding: 38px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 8% 82%, rgba(255, 255, 255, 0.08) 0 70px, transparent 72px),
+    radial-gradient(circle at 92% 2%, rgba(255, 255, 255, 0.12) 0 130px, transparent 132px),
+    linear-gradient(135deg, #0c5bc3 0%, #1d7ddf 48%, #48aaf2 100%);
 }
 
-.brand-content {
-  max-width: 520px;
-  width: 100%;
+.login-card {
+  width: min(860px, 100%);
+  min-height: 520px;
+  display: grid;
+  grid-template-columns: 0.9fr 1fr;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 26px 70px rgba(14, 57, 120, 0.35);
 }
 
-.brand-header {
-  margin-bottom: 16px;
+.intro-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 36px 30px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.11), transparent 80px),
+    linear-gradient(180deg, #1067d7 0%, #1682e7 60%, #239bf1 100%);
 }
 
-.brand-chip-icon {
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 28px;
-}
-
-.brand-title-main {
-  font-size: 36px;
-  font-weight: 700;
-  color: #fff;
-  margin: 0;
-  line-height: 1.3;
-  letter-spacing: 2px;
-}
-
-.brand-title-sub {
-  font-size: 28px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  line-height: 1.3;
-  letter-spacing: 2px;
-}
-
-.brand-tagline {
+.system-brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 34px;
 }
 
-.tagline-item {
+.brand-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
-  letter-spacing: 1px;
 }
 
-.tagline-divider {
-  width: 1px;
-  height: 14px;
-  background: rgba(255, 255, 255, 0.3);
+.brand-name {
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 700;
 }
 
-.brand-desc {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.65);
+.intro-title {
+  margin: 0;
+  color: #ffffff;
+  font-size: 27px;
+  line-height: 1.35;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.intro-desc {
+  margin: 16px 0 24px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
   line-height: 1.8;
-  margin: 0 0 36px;
 }
 
 .feature-list {
   list-style: none;
   padding: 0;
-  margin: 0 0 48px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  margin: 0;
+  display: grid;
 }
 
-.feature-item {
+.feature-list li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.85);
-  font-weight: 500;
+  gap: 11px;
+  min-height: 42px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 13px;
 }
 
-.feature-item svg {
-  flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.brand-footer {
+.feature-icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.14);
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
 }
 
-/* ===== 右侧登录区 ===== */
+.intro-footer {
+  margin-top: auto;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 11px;
+}
+
 .login-panel {
-  width: 500px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
-  padding: 48px;
-  box-sizing: border-box;
-  flex-shrink: 0;
+  padding: 32px;
+  background: #ffffff;
 }
 
-.login-form-wrap {
-  width: 100%;
-  max-width: 380px;
+.form-card {
+  width: min(350px, 100%);
 }
 
-.login-badge {
-  display: inline-block;
-  padding: 4px 14px;
-  border-radius: 20px;
-  background: #eff6ff;
-  color: #1d4ed8;
+.form-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #edf6ff;
+  color: #2d7cf1;
   font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  letter-spacing: 1px;
-}
-
-.login-heading {
-  font-size: 32px;
   font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 8px;
+  margin-bottom: 22px;
 }
 
-.login-subtitle {
-  font-size: 14px;
-  color: #64748b;
-  margin: 0 0 32px;
+.welcome-title {
+  margin: 0;
+  color: #111827;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 800;
 }
 
-.form-extra {
+.welcome-subtitle {
+  margin: 8px 0 20px;
+  color: #8b95a5;
+  font-size: 13px;
+}
+
+.login-form :deep(.el-form-item) {
+  margin-bottom: 14px;
+}
+
+.login-form :deep(.el-form-item__label) {
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.login-form :deep(.el-input__wrapper),
+.login-form :deep(.el-select__wrapper) {
+  border-radius: 9px;
+  background: #f7f9fc;
+  box-shadow: 0 0 0 1px #edf1f7 inset;
+}
+
+.login-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin: 0 0 12px;
+}
+
+.login-meta :deep(.el-checkbox__label),
+.forgot-link {
+  font-size: 12px;
+}
+
+.forgot-link {
+  padding: 0;
 }
 
 .login-btn {
   width: 100%;
   height: 44px;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 1px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 12px 24px rgba(45, 124, 241, 0.28);
 }
 
-.register-hint {
+.divider-text {
+  position: relative;
+  margin: 18px 0 12px;
   text-align: center;
-  margin-top: 24px;
-  font-size: 14px;
-  color: #64748b;
+  color: #c0c7d2;
+  font-size: 12px;
 }
 
-.register-hint .el-button {
-  padding: 0 4px;
-  font-size: 14px;
+.divider-text::before,
+.divider-text::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background: #edf1f7;
 }
 
-/* ===== 响应式 ===== */
-@media (max-width: 768px) {
-  .brand-panel {
-    display: none;
+.divider-text::before {
+  left: 0;
+}
+
+.divider-text::after {
+  right: 0;
+}
+
+.bottom-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  color: #8b95a5;
+  font-size: 12px;
+}
+
+@media (max-width: 860px) {
+  .login-page {
+    padding: 20px;
   }
+
+  .login-card {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .intro-panel {
+    padding: 28px;
+  }
+
   .login-panel {
-    width: 100%;
-    padding: 32px;
+    padding: 28px;
   }
 }
 </style>

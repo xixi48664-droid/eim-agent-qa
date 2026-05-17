@@ -3,9 +3,20 @@ import { useAuthStore } from '../stores/auth'
 
 const routes = [
   {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: () => import('../views/common/ResetPassword.vue'),
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('../views/common/Login.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: () => import('../views/common/Register.vue'),
     meta: { public: true },
   },
   {
@@ -15,12 +26,54 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: '/parameter-query',
+        redirect: '/main-chat',
+      },
+      {
+        path: 'main-chat',
+        name: 'main-chat',
+        component: () => import('../views/user/MainChat.vue'),
+      },
+      {
+        path: 'photo-recognition',
+        redirect: '/main-chat',
       },
       {
         path: 'parameter-query',
         name: 'parameter-query',
         component: () => import('../views/user/ParameterQuery.vue'),
+      },
+      {
+        path: 'spec-qa',
+        name: 'spec-qa',
+        component: () => import('../views/user/SpecQA.vue'),
+      },
+      {
+        path: 'process-guide',
+        name: 'process-guide',
+        component: () => import('../views/user/ProcessGuide.vue'),
+      },
+      {
+        path: 'history-record',
+        name: 'history-record',
+        component: () => import('../views/user/HistoryRecord.vue'),
+      },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('../views/user/ProfileCenter.vue'),
+      },
+      {
+        path: '/profile',
+        redirect: { name: 'profile' },
+      },
+      {
+        path: 'history',
+        redirect: '/history-record',
+      },
+      {
+        path: 'detail',
+        name: 'detail',
+        component: () => import('../views/admin/DetailView.vue'),
       },
     ],
   },
@@ -37,6 +90,16 @@ const routes = [
         path: 'users',
         name: 'admin-users',
         component: () => import('../views/admin/AdminUsers.vue'),
+      },
+      {
+        path: 'monitor',
+        name: 'admin-monitor',
+        component: () => import('../views/admin/AdminMonitor.vue'),
+      },
+      {
+        path: 'knowledge',
+        name: 'admin-knowledge',
+        component: () => import('../views/admin/AdminKnowledge.vue'),
       },
     ],
   },
