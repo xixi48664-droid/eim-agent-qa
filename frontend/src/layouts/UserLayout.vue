@@ -10,13 +10,11 @@ const authStore = useAuthStore()
 const userName = computed(() => authStore.nickname || authStore.account || '游客')
 
 const menuItems = [
-  { index: '/main-chat', label: '主问答' },
-  { index: '/photo-recognition', label: '拍照识件' },
+  { index: '/main-chat', label: '智能问答' },
   { index: '/parameter-query', label: '参数查询' },
   { index: '/spec-qa', label: '规范问答' },
   { index: '/process-guide', label: '流程指导' },
   { index: '/history-record', label: '历史记录' },
-  { index: '/profile', label: '个人中心' },
 ]
 
 const isAdmin = computed(() => authStore.isAdmin)
@@ -111,7 +109,7 @@ const handleLogout = () => {
 .user-layout {
   width: 100%;
   min-height: 100vh;
-  background: #f3f7ff;
+  background: var(--app-bg);
 }
 
 .topbar {
@@ -124,7 +122,7 @@ const handleLogout = () => {
   padding: 0 28px;
   color: #fff;
   background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 55%, #3b82f6 100%);
-  box-shadow: 0 2px 12px rgba(29, 78, 216, 0.18);
+  box-shadow: 0 2px 12px var(--app-primary-shadow);
 }
 
 .brand-wrap {
@@ -202,8 +200,8 @@ const handleLogout = () => {
 }
 
 .sidebar {
-  background: #fff;
-  border-right: 1px solid #e5edf8;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  border-right: 1px solid #d6ebff;
 }
 
 .sidebar-inner {
@@ -232,11 +230,14 @@ const handleLogout = () => {
 
 :deep(.el-menu-item.is-active) {
   background: #e8f1ff;
-  font-weight: 600;
+  color: #1677ff !important;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(22, 119, 255, 0.12);
 }
 
 :deep(.el-menu-item:hover) {
   background: #f2f7ff;
+  color: #1677ff;
 }
 
 .nav-divider {

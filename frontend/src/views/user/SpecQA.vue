@@ -8,11 +8,17 @@ const loadingDetail = ref(false)
 const result = ref(null)
 const detailVisible = ref(false)
 const standardDetail = ref(null)
-const historyList = ref([])
-
 const queryForm = reactive({
   question: '',
+  category: '',
 })
+
+const categoryOptions = [
+  { value: '', label: '全部类别' },
+  { value: '国家标准', label: '国家标准' },
+  { value: '行业标准', label: '行业标准' },
+  { value: '企业标准', label: '企业标准' },
+]
 
 const hotQuestions = [
   'RoHS 指令的具体要求是什么？',
@@ -22,16 +28,6 @@ const hotQuestions = [
   '静电防护的标准规范',
   '电子产品可靠性测试标准',
 ]
-
-const addHistory = (question, answer, status = 'success') => {
-  historyList.value.unshift({
-    id: `${Date.now()}-${Math.random()}`,
-    time: new Date().toLocaleString(),
-    question,
-    answer,
-    status,
-  })
-}
 
 const normalizeSources = (sources = []) => {
   return (sources || []).map((item) => ({
@@ -64,11 +60,9 @@ const handleAsk = async (questionText = queryForm.question) => {
       recommendedQuestions: data.recommendedQuestions || [],
     }
 
-    addHistory(text, result.value.answer, 'success')
   } catch (error) {
     const msg = error.message || '规范问答失败，请稍后重试'
     ElMessage.error(msg)
-    addHistory(text, msg, 'danger')
   } finally {
     asking.value = false
   }
@@ -108,6 +102,17 @@ const openStandardDetail = async (sourceId) => {
       </template>
 
       <div class="query-form-row">
+        <div class="category-search-wrap">
+          <span class="category-label">按类别搜索</span>
+          <el-select v-model="queryForm.category" class="category-select" placeholder="全部类别">
+            <el-option
+              v-for="item in categoryOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </div>
         <el-input
           v-model="queryForm.question"
           class="question-input"
@@ -115,12 +120,12 @@ const openStandardDetail = async (sourceId) => {
           clearable
           @keyup.enter="handleAsk()"
         />
-        <el-button type="primary" :loading="asking" @click="handleAsk()">搜索</el-button>
+        <el-button class="search-button" type="primary" :loading="asking" @click="handleAsk()">搜索</el-button>
       </div>
     </el-card>
 
     <el-row :gutter="16">
-      <el-col :span="17">
+      <el-col :span="24">
         <el-card class="answer-card">
           <template #header>
             <div class="section-title">问答结果</div>
@@ -180,42 +185,27 @@ const openStandardDetail = async (sourceId) => {
           </div>
         </el-card>
       </el-col>
+    </el-row>
 
-      <el-col :span="7">
-        <el-card class="hot-card">
-          <template #header>
-            <div class="section-title">常见规范问题</div>
-          </template>
-          <div class="hot-list">
-            <el-button
-              v-for="item in hotQuestions"
-              :key="item"
-              class="hot-item"
-              text
-              @click="useHotQuestion(item)"
-            >
-              {{ item }}
-            </el-button>
-          </div>
-        </el-card>
+    <el-card class="hot-card">
+      <template #header>
+        <div class="section-title">常见规范问题</div>
+      </template>
+      <div class="hot-list">
+        <el-button
+          v-for="item in hotQuestions"
+          :key="item"
+          class="hot-item"
+          text
+          @click="useHotQuestion(item)"
+        >
+          {{ item }}
+        </el-button>
+      </div>
+    </el-card>
 
-        <el-card class="history-card">
-          <template #header>
-            <div class="section-title">问答记录</div>
-          </template>
-          <el-timeline v-if="historyList.length">
-            <el-timeline-item
-              v-for="item in historyList"
-              :key="item.id"
-              :timestamp="item.time"
-              :type="item.status"
-            >
-              <div class="history-question">Q: {{ item.question }}</div>
-              <div class="history-answer">A: {{ item.answer }}</div>
-            </el-timeline-item>
-          </el-timeline>
-          <el-empty v-else description="暂无问答记录" />
-        </el-card>
+    <el-row :gutter="16">
+      <el-col :span="24">
       </el-col>
     </el-row>
 
@@ -244,13 +234,50 @@ const openStandardDetail = async (sourceId) => {
   gap: 16px;
 }
 
+.query-card {
+  border-radius: 12px;
+  border: 1px solid rgba(22, 119, 255, 0.18);
+  box-shadow: 0 8px 24px rgba(22, 119, 255, 0.08);
+}
+
 .query-form-row {
   display: flex;
+  align-items: center;
   gap: 12px;
+}
+
+.category-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.category-label {
+  color: #1677ff;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.category-select {
+  width: 150px;
 }
 
 .question-input {
   flex: 1;
+}
+
+.question-input :deep(.el-input__wrapper),
+.category-select :deep(.el-select__wrapper) {
+  min-height: 44px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px rgba(22, 119, 255, 0.18) inset;
+}
+
+.search-button {
+  min-width: 84px;
+  height: 44px;
+  box-shadow: 0 8px 18px rgba(22, 119, 255, 0.22);
 }
 
 .section-title {
@@ -289,6 +316,8 @@ const openStandardDetail = async (sourceId) => {
 
 .source-item {
   border-radius: 10px;
+  border: 1px solid rgba(22, 119, 255, 0.16);
+  box-shadow: 0 6px 18px rgba(22, 119, 255, 0.06);
 }
 
 .source-top {
@@ -319,31 +348,29 @@ const openStandardDetail = async (sourceId) => {
   cursor: pointer;
 }
 
+.hot-card {
+  position: sticky;
+  bottom: 16px;
+  z-index: 5;
+  border-radius: 12px;
+  box-shadow: 0 -4px 22px rgba(15, 23, 42, 0.08);
+}
+
 .hot-list {
   display: grid;
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .hot-item {
   justify-content: flex-start;
+  min-height: 42px;
+  padding: 10px 12px;
   white-space: normal;
   text-align: left;
   line-height: 1.6;
-}
-
-.history-card {
-  margin-top: 16px;
-}
-
-.history-question {
-  font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 6px;
-}
-
-.history-answer {
-  color: #64748b;
-  line-height: 1.6;
+  background: #f8fafc;
+  border-radius: 8px;
 }
 
 .detail-wrap {

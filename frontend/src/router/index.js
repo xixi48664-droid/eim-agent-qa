@@ -35,8 +35,7 @@ const routes = [
       },
       {
         path: 'photo-recognition',
-        name: 'photo-recognition',
-        component: () => import('../views/user/PhotoRecognition.vue'),
+        redirect: '/main-chat',
       },
       {
         path: 'parameter-query',

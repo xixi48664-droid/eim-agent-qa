@@ -340,11 +340,15 @@ onMounted(() => {
 
 /* 表格样式 */
 :deep(.el-table th) {
-  background: #f8fafc !important;
-  color: #64748b;
-  font-weight: 600;
+  background: var(--app-primary-light) !important;
+  color: var(--app-primary);
+  font-weight: 700;
   font-size: 13px;
   padding: 12px 8px !important;
+}
+
+:deep(.el-table th .cell) {
+  color: var(--app-primary);
 }
 
 :deep(.el-table td) {

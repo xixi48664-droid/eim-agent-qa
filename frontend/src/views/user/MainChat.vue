@@ -1,13 +1,29 @@
 <script setup>
 import { computed, nextTick, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import {
+  ChatDotRound,
+  DocumentCopy,
+  Paperclip,
+  Pointer,
+  RefreshRight,
+  Share,
+} from '@element-plus/icons-vue'
 import { askQuestionApi, continueConversationApi, submitChatFeedbackApi } from '../../api/chat'
+import { recognizeComponentApi } from '../../api/recognition'
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp']
 
 const inputText = ref('')
 const loading = ref(false)
+const recognizing = ref(false)
 const feedbackSubmitting = ref(false)
-const sessionId = ref('')
+const sessionId = ref(sessionStorage.getItem('eim_main_chat_session_id') || '')
 const messageListRef = ref(null)
+const imageInputRef = ref(null)
+const selectedImage = ref(null)
+const selectedImageUrl = ref('')
 const feedbackDialogVisible = ref(false)
 const feedbackTarget = ref(null)
 const feedbackForm = ref({ type: 'like', comment: '' })
@@ -20,7 +36,14 @@ const recommendedQuestions = [
   '故障诊断报告',
 ]
 
-const messages = ref([
+const savedMessages = sessionStorage.getItem('eim_main_chat_messages')
+
+const persistChat = () => {
+  sessionStorage.setItem('eim_main_chat_messages', JSON.stringify(messages.value))
+  sessionStorage.setItem('eim_main_chat_session_id', sessionId.value || '')
+}
+
+const messages = ref(savedMessages ? JSON.parse(savedMessages) : [
   {
     id: 'welcome-bot',
     role: 'assistant',
@@ -31,7 +54,8 @@ const messages = ref([
   },
 ])
 
-const canSend = computed(() => inputText.value.trim().length > 0 && !loading.value)
+const canSend = computed(() => inputText.value.trim().length > 0 && !loading.value && !recognizing.value)
+const canRecognize = computed(() => Boolean(selectedImage.value) && !loading.value && !recognizing.value)
 
 const formatTime = (value) => {
   const date = value instanceof Date ? value : new Date(value)
@@ -62,6 +86,105 @@ const appendAssistantMessage = (data) => {
     sources: normalizeSources(data.sources),
     recommendedQuestions: data.recommendedQuestions || [],
   })
+  persistChat()
+}
+
+const triggerImageSelect = () => {
+  imageInputRef.value?.click()
+}
+
+const validateImageFile = (file) => {
+  if (!file) return '请选择图片文件'
+  if (!ALLOWED_TYPES.includes(file.type)) return '图片格式不支持，请上传 JPG、PNG、GIF、WEBP 或 BMP 图片'
+  if (file.size > MAX_FILE_SIZE) return '图片大小不能超过 10MB'
+  return ''
+}
+
+const clearSelectedImage = () => {
+  if (selectedImageUrl.value) URL.revokeObjectURL(selectedImageUrl.value)
+  selectedImage.value = null
+  selectedImageUrl.value = ''
+}
+
+const handleImageChange = (event) => {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  const error = validateImageFile(file)
+  if (error) {
+    ElMessage.warning(error)
+    return
+  }
+
+  clearSelectedImage()
+  selectedImage.value = file
+  selectedImageUrl.value = URL.createObjectURL(file)
+}
+
+const buildRecognitionText = (data) => {
+  const confidence = Math.round(Number(data.confidence || 0) * 100)
+  const lines = [
+    `识别型号：${data.model || '未知型号'}`,
+    `类型：${data.type || '—'}`,
+    `封装：${data.packageType || '—'}`,
+    `厂商：${data.manufacturer || '—'}`,
+    `置信度：${confidence}%`,
+  ]
+  return lines.join('\n')
+}
+
+const recognizeSelectedImage = async () => {
+  const error = validateImageFile(selectedImage.value)
+  if (error) {
+    ElMessage.warning(error)
+    return
+  }
+
+  const imageUrl = selectedImageUrl.value
+  messages.value.push({
+    id: `user-image-${Date.now()}`,
+    role: 'user',
+    content: inputText.value.trim() || '请识别这张元器件图片',
+    imageUrl,
+    time: new Date(),
+  })
+
+  const file = selectedImage.value
+  inputText.value = ''
+  selectedImage.value = null
+  selectedImageUrl.value = ''
+  recognizing.value = true
+  persistChat()
+  await scrollToBottom()
+
+  try {
+    const res = await recognizeComponentApi(file)
+    const data = res.data || {}
+    messages.value.push({
+      id: `assistant-recognition-${Date.now()}`,
+      role: 'assistant',
+      content: buildRecognitionText(data),
+      time: new Date(),
+      recognition: data,
+      sources: [],
+      recommendedQuestions: data.model ? [`查询 ${data.model} 的详细参数`] : [],
+    })
+    persistChat()
+  } catch (error) {
+    messages.value.push({
+      id: `assistant-recognition-error-${Date.now()}`,
+      role: 'assistant',
+      content: error.message || '图片识别失败，请稍后重试。',
+      time: new Date(),
+      isError: true,
+      sources: [],
+      recommendedQuestions: [],
+    })
+    persistChat()
+    ElMessage.error(error.message || '图片识别失败')
+  } finally {
+    recognizing.value = false
+    scrollToBottom()
+  }
 }
 
 const sendQuestion = async (questionText = inputText.value) => {
@@ -79,6 +202,7 @@ const sendQuestion = async (questionText = inputText.value) => {
   })
   inputText.value = ''
   loading.value = true
+  persistChat()
   await scrollToBottom()
 
   try {
@@ -99,6 +223,7 @@ const sendQuestion = async (questionText = inputText.value) => {
       sources: [],
       recommendedQuestions: [],
     })
+    persistChat()
     ElMessage.error(error.message || '发送失败')
   } finally {
     loading.value = false
@@ -139,6 +264,7 @@ const confirmFeedback = async () => {
     message.feedback = feedback
     message.feedbackComment = comment
     feedbackDialogVisible.value = false
+    persistChat()
     ElMessage.success('反馈已记录')
     return
   }
@@ -149,12 +275,58 @@ const confirmFeedback = async () => {
     message.feedback = feedback
     message.feedbackComment = comment
     feedbackDialogVisible.value = false
+    persistChat()
     ElMessage.success('反馈已提交')
   } catch (error) {
     ElMessage.error(error.message || '反馈提交失败')
   } finally {
     feedbackSubmitting.value = false
   }
+}
+
+const copyMessage = async (message) => {
+  try {
+    await navigator.clipboard.writeText(message.content || '')
+    ElMessage.success('已复制回答内容')
+  } catch {
+    ElMessage.error('复制失败，请手动复制')
+  }
+}
+
+const regenerateMessage = async (message) => {
+  const index = messages.value.findIndex((item) => item.id === message.id)
+  if (index <= 0) {
+    ElMessage.warning('没有可重新生成的问题')
+    return
+  }
+
+  const previousUserMessage = [...messages.value]
+    .slice(0, index)
+    .reverse()
+    .find((item) => item.role === 'user' && item.content)
+
+  if (!previousUserMessage) {
+    ElMessage.warning('没有可重新生成的问题')
+    return
+  }
+
+  messages.value.splice(index, 1)
+  persistChat()
+  await sendQuestion(previousUserMessage.content)
+}
+
+const shareMessage = async (message) => {
+  const text = message.content || ''
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: '智能问答回答', text })
+      return
+    } catch (error) {
+      if (error.name === 'AbortError') return
+    }
+  }
+  await copyMessage(message)
+  ElMessage.success('分享内容已复制')
 }
 
 const exportConversation = () => {
@@ -166,7 +338,7 @@ const exportConversation = () => {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `主问答记录_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.txt`
+  link.download = `智能问答记录_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.txt`
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
@@ -200,6 +372,23 @@ const exportConversation = () => {
           <div class="message-content-wrap">
             <div class="message-bubble" :class="{ error: message.isError }">
               <div class="message-text">{{ message.content }}</div>
+              <el-image
+                v-if="message.imageUrl"
+                class="chat-image"
+                :src="message.imageUrl"
+                fit="contain"
+                :preview-src-list="[message.imageUrl]"
+              />
+
+              <div v-if="message.recognition" class="recognition-card">
+                <div class="recognition-title">识别结果</div>
+                <div class="recognition-grid">
+                  <span>型号</span><strong>{{ message.recognition.model || '未知型号' }}</strong>
+                  <span>类型</span><strong>{{ message.recognition.type || '—' }}</strong>
+                  <span>封装</span><strong>{{ message.recognition.packageType || '—' }}</strong>
+                  <span>厂商</span><strong>{{ message.recognition.manufacturer || '—' }}</strong>
+                </div>
+              </div>
 
               <div v-if="message.sources?.length" class="source-list">
                 <div class="source-title">参考来源</div>
@@ -222,29 +411,42 @@ const exportConversation = () => {
               </div>
 
               <div v-if="message.role === 'assistant' && message.id !== 'welcome-bot'" class="message-tools">
-                <el-button
-                  text
-                  size="small"
-                  :disabled="feedbackSubmitting"
-                  @click="openFeedbackDialog(message, 'like')"
-                >
-                  {{ message.feedback === 'like' ? '已赞' : '赞' }}
-                </el-button>
-                <el-button
-                  text
-                  size="small"
-                  :disabled="feedbackSubmitting"
-                  @click="openFeedbackDialog(message, 'dislike')"
-                >
-                  {{ message.feedback === 'dislike' ? '已踩' : '踩' }}
-                </el-button>
+                <el-tooltip content="复制" placement="bottom">
+                  <el-button class="tool-icon-btn" text :icon="DocumentCopy" @click="copyMessage(message)" />
+                </el-tooltip>
+                <el-tooltip content="重新生成" placement="bottom">
+                  <el-button class="tool-icon-btn" text :icon="RefreshRight" :disabled="loading || recognizing" @click="regenerateMessage(message)" />
+                </el-tooltip>
+                <el-tooltip content="有帮助" placement="bottom">
+                  <el-button
+                    class="tool-icon-btn"
+                    text
+                    :class="{ active: message.feedback === 'like' }"
+                    :icon="Pointer"
+                    :disabled="feedbackSubmitting"
+                    @click="openFeedbackDialog(message, 'like')"
+                  />
+                </el-tooltip>
+                <el-tooltip content="需改进" placement="bottom">
+                  <el-button
+                    class="tool-icon-btn dislike-icon"
+                    text
+                    :class="{ active: message.feedback === 'dislike' }"
+                    :icon="Pointer"
+                    :disabled="feedbackSubmitting"
+                    @click="openFeedbackDialog(message, 'dislike')"
+                  />
+                </el-tooltip>
+                <el-tooltip content="分享" placement="bottom">
+                  <el-button class="tool-icon-btn" text :icon="Share" @click="shareMessage(message)" />
+                </el-tooltip>
               </div>
             </div>
             <div class="message-time">{{ formatTime(message.time) }}</div>
           </div>
         </div>
 
-        <div v-if="loading" class="message-row assistant">
+        <div v-if="loading || recognizing" class="message-row assistant">
           <div class="avatar assistant">AI</div>
           <div class="message-content-wrap">
             <div class="message-bubble loading-bubble">
@@ -283,16 +485,39 @@ const exportConversation = () => {
         </template>
       </el-dialog>
 
+      <div v-if="selectedImageUrl" class="image-preview-bar">
+        <el-image class="selected-image" :src="selectedImageUrl" fit="contain" />
+        <div class="selected-image-info">
+          <div class="selected-image-name">{{ selectedImage?.name }}</div>
+          <div class="selected-image-tip">图片已添加，可直接识别，也可补充文字说明后发送</div>
+        </div>
+        <el-button text type="danger" @click="clearSelectedImage">移除</el-button>
+      </div>
+
       <div class="input-area">
         <div class="input-avatar"></div>
+        <input ref="imageInputRef" type="file" class="hidden-file-input" accept="image/*" @change="handleImageChange" />
+        <el-tooltip content="上传图片" placement="top">
+          <el-button class="upload-icon-btn" circle :icon="Paperclip" @click="triggerImageSelect" />
+        </el-tooltip>
         <el-input
           v-model="inputText"
           class="question-input"
-          placeholder="输入您的问题，如上传图片进行识别..."
+          placeholder="输入您的问题，或添加图片进行元器件识别..."
           clearable
-          @keyup.enter="sendQuestion()"
+          @keyup.enter="selectedImage ? recognizeSelectedImage() : sendQuestion()"
         />
-        <el-button type="primary" round :disabled="!canSend" :loading="loading" @click="sendQuestion()">
+        <el-button
+          v-if="selectedImage"
+          type="primary"
+          round
+          :disabled="!canRecognize"
+          :loading="recognizing"
+          @click="recognizeSelectedImage"
+        >
+          识别
+        </el-button>
+        <el-button v-else type="primary" round :disabled="!canSend" :loading="loading" @click="sendQuestion()">
           发送
         </el-button>
         <el-button round @click="exportConversation">导出</el-button>
@@ -336,9 +561,9 @@ const exportConversation = () => {
 }
 
 .quick-btn {
-  color: #1677ff;
-  background: #eef7ff;
-  border-color: #d6ebff;
+  color: var(--app-primary);
+  background: var(--app-primary-light);
+  border-color: var(--app-primary-border);
 }
 
 .message-list {
@@ -371,7 +596,7 @@ const exportConversation = () => {
 }
 
 .avatar.assistant {
-  background: #1684e8;
+  background: var(--app-primary);
 }
 
 .avatar.user {
@@ -400,7 +625,7 @@ const exportConversation = () => {
 .message-row.user .message-bubble {
   color: #fff;
   background: #1684e8;
-  border-color: #1684e8;
+  border-color: var(--app-primary);
   box-shadow: 0 8px 22px rgba(22, 132, 232, 0.22);
 }
 
@@ -466,8 +691,69 @@ const exportConversation = () => {
 
 .message-tools {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 2px;
   margin-top: 10px;
+}
+
+.tool-icon-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: #94a3b8;
+}
+
+.tool-icon-btn:hover,
+.tool-icon-btn.active {
+  color: #1677ff;
+}
+
+.dislike-icon {
+  transform: rotate(180deg);
+}
+
+.upload-icon-btn {
+  color: #64748b;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.chat-image {
+  width: 220px;
+  height: 150px;
+  margin-top: 10px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.recognition-card {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+}
+
+.recognition-title {
+  margin-bottom: 8px;
+  color: #1677ff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.recognition-grid {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 7px 10px;
+  font-size: 13px;
+}
+
+.recognition-grid span {
+  color: #64748b;
+}
+
+.recognition-grid strong {
+  color: #0f172a;
 }
 
 .loading-bubble {
@@ -491,6 +777,46 @@ const exportConversation = () => {
 
 .dot:nth-child(3) {
   animation-delay: 0.4s;
+}
+
+.image-preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+  border-top: 1px solid #edf1f7;
+  background: #f8fafc;
+}
+
+.selected-image {
+  width: 72px;
+  height: 52px;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.selected-image-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-image-name {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.selected-image-tip {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.hidden-file-input {
+  display: none;
 }
 
 .input-area {
