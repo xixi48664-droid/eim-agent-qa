@@ -155,31 +155,50 @@ const handleSync = async (row) => {
 }
 
 // 导入
-const handleImport = async () => {
+const importInputRef = ref(null)
+const handleImport = () => {
+  importInputRef.value?.click()
+}
+
+const handleImportFile = async (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
   try {
-    await ElMessageBox.alert('请选择要导入的文件（支持 .json / .xlsx 格式）', '导入知识库', {
-      confirmButtonText: '确定',
-    })
-    await importKnowledge(new FormData())
+    const formData = new FormData()
+    formData.append('file', file)
+    await importKnowledge(formData)
     ElMessage.success('导入成功')
     fetchData()
   } catch {
-    // 用户取消或错误由拦截器处理
+    // 错误由拦截器处理
+  } finally {
+    // 重置 input 以允许重复选择同一文件
+    event.target.value = ''
   }
 }
 
 // 导出
+const exportLoading = ref(false)
 const handleExport = async () => {
   try {
     await ElMessageBox.confirm('确定要导出所有知识库吗？', '导出知识库', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
     })
+    exportLoading.value = true
     const ids = tableData.value.map(t => t.id)
-    await exportKnowledge(ids)
+    const blob = await exportKnowledge(ids)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `知识库导出_${new Date().toISOString().substring(0, 10)}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
     ElMessage.success('导出成功')
   } catch {
     // 用户取消或错误由拦截器处理
+  } finally {
+    exportLoading.value = false
   }
 }
 
@@ -209,6 +228,13 @@ onMounted(() => {
         <span class="total-count">共 {{ total }} 条知识条目</span>
       </div>
       <div class="header-actions">
+        <input
+          ref="importInputRef"
+          type="file"
+          accept=".json,.xlsx,.xls"
+          style="display:none"
+          @change="handleImportFile"
+        />
         <el-button @click="handleImport">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px">
             <polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/>
@@ -216,7 +242,7 @@ onMounted(() => {
           </svg>
           导入
         </el-button>
-        <el-button @click="handleExport">
+        <el-button :loading="exportLoading" @click="handleExport">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px">
             <polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/>
             <path d="M3 15V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10"/>

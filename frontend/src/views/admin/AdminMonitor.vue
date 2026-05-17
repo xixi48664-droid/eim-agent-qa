@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getMonitorOverview, getMonitorTrend, getServiceList, refreshMonitor } from '../../api/admin/monitor'
 
@@ -47,13 +47,6 @@ const handleRefresh = async () => {
   }
 }
 
-// 计算响应时间变化颜色
-const responseTimeClass = (change) => {
-  if (change && change.startsWith('-')) return 'change-good'
-  if (change && change.startsWith('+')) return 'change-bad'
-  return ''
-}
-
 // 状态颜色
 const statusClass = (status) => {
   if (status === 'running') return 'status-running'
@@ -65,9 +58,15 @@ const statusClass = (status) => {
 const drawBarChart = (canvasId, data, color) => {
   const canvas = document.getElementById(canvasId)
   if (!canvas) return
+  const container = canvas.parentElement
+  const W = container ? container.clientWidth : canvas.width
+  const H = 160
+  canvas.width = W * window.devicePixelRatio
+  canvas.height = H * window.devicePixelRatio
+  canvas.style.width = W + 'px'
+  canvas.style.height = H + 'px'
   const ctx = canvas.getContext('2d')
-  const W = canvas.width
-  const H = canvas.height
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
   ctx.clearRect(0, 0, W, H)
 
   if (!data || data.length === 0) return
@@ -99,9 +98,15 @@ const drawBarChart = (canvasId, data, color) => {
 const drawLineChart = (canvasId, data, color) => {
   const canvas = document.getElementById(canvasId)
   if (!canvas) return
+  const container = canvas.parentElement
+  const W = container ? container.clientWidth : canvas.width
+  const H = 160
+  canvas.width = W * window.devicePixelRatio
+  canvas.height = H * window.devicePixelRatio
+  canvas.style.width = W + 'px'
+  canvas.style.height = H + 'px'
   const ctx = canvas.getContext('2d')
-  const W = canvas.width
-  const H = canvas.height
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
   ctx.clearRect(0, 0, W, H)
 
   if (!data || data.length === 0) return
@@ -165,6 +170,8 @@ const redrawCharts = () => {
 }
 
 let chartTimer = null
+let resizeObserver = null
+
 const scheduleChartDraw = () => {
   if (chartTimer) clearTimeout(chartTimer)
   chartTimer = setTimeout(redrawCharts, 100)
@@ -173,6 +180,15 @@ const scheduleChartDraw = () => {
 onMounted(async () => {
   await fetchData()
   scheduleChartDraw()
+
+  // 监听容器大小变化重绘图表
+  resizeObserver = new ResizeObserver(() => {
+    scheduleChartDraw()
+  })
+  const requestChart = document.getElementById('request-chart')
+  const responseChart = document.getElementById('response-chart')
+  if (requestChart) resizeObserver.observe(requestChart.parentElement)
+  if (responseChart) resizeObserver.observe(responseChart.parentElement)
 
   // 每60秒自动刷新一次
   autoRefreshTimer = setInterval(async () => {
@@ -189,10 +205,10 @@ onMounted(async () => {
 onUnmounted(() => {
   if (autoRefreshTimer) clearInterval(autoRefreshTimer)
   if (chartTimer) clearTimeout(chartTimer)
+  if (resizeObserver) resizeObserver.disconnect()
 })
 
 // 监听 trend 变化重绘图表
-import { watch } from 'vue'
 watch(() => trend.value, scheduleChartDraw, { deep: true })
 </script>
 
@@ -248,13 +264,17 @@ watch(() => trend.value, scheduleChartDraw, { deep: true })
       <div class="chart-card">
         <div class="chart-title">今日请求量（近12小时）</div>
         <div class="chart-area">
-          <canvas id="request-chart" width="700" height="160"></canvas>
+          <canvas id="request-chart"></canvas>
         </div>
       </div>
       <div class="chart-card">
         <div class="chart-title">响应时间趋势（ms）</div>
-        <div class="chart-area">
-          <canvas id="response-chart" width="700" height="160"></canvas>
+        <div class="chart-area" v-if="trend.responseTimeTrend && trend.responseTimeTrend.length">
+          <canvas id="response-chart"></canvas>
+        </div>
+        <div class="chart-area chart-empty" v-else>
+          <span class="empty-text">暂无逐小时响应时间数据</span>
+          <span class="empty-sub">后端不支持此统计维度，当前仅提供汇总均值</span>
         </div>
       </div>
     </div>
@@ -423,6 +443,26 @@ watch(() => trend.value, scheduleChartDraw, { deep: true })
 .chart-area canvas {
   width: 100% !important;
   height: auto;
+}
+
+.chart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  gap: 6px;
+}
+
+.empty-text {
+  font-size: 14px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.empty-sub {
+  font-size: 12px;
+  color: #cbd5e1;
 }
 
 /* 服务状态表 */
