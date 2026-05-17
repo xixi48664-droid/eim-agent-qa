@@ -5,9 +5,12 @@ import { askQuestionApi, continueConversationApi, submitChatFeedbackApi } from '
 
 const inputText = ref('')
 const loading = ref(false)
-const sendingFeedbackId = ref('')
+const feedbackSubmitting = ref(false)
 const sessionId = ref('')
 const messageListRef = ref(null)
+const feedbackDialogVisible = ref(false)
+const feedbackTarget = ref(null)
+const feedbackForm = ref({ type: 'like', comment: '' })
 
 const recommendedQuestions = [
   '元器件参数查询',
@@ -50,6 +53,7 @@ const normalizeSources = (sources) => {
 const appendAssistantMessage = (data) => {
   messages.value.push({
     id: data.messageId || `assistant-${Date.now()}`,
+    messageId: data.messageId || '',
     role: 'assistant',
     content: data.answer || '暂未获取到回答内容。',
     time: new Date(),
@@ -113,21 +117,43 @@ const handleQuickQuestion = (label) => {
   sendQuestion(questionMap[label] || label)
 }
 
-const handleFeedback = async (message, feedback) => {
-  if (!message.id || String(message.id).startsWith('assistant-')) {
-    ElMessage.warning('当前回答暂不支持反馈')
+const openFeedbackDialog = (message, feedback) => {
+  feedbackTarget.value = message
+  feedbackForm.value = { type: feedback, comment: '' }
+  feedbackDialogVisible.value = true
+}
+
+const confirmFeedback = async () => {
+  const message = feedbackTarget.value
+  const feedback = feedbackForm.value.type
+  const comment = feedbackForm.value.comment.trim()
+
+  if (comment.length > 200) {
+    ElMessage.warning('反馈说明不能超过 200 个字符')
     return
   }
 
-  sendingFeedbackId.value = message.id
-  try {
-    await submitChatFeedbackApi({ messageId: message.id, feedback })
+  if (!message) return
+
+  if (!message.messageId) {
     message.feedback = feedback
+    message.feedbackComment = comment
+    feedbackDialogVisible.value = false
+    ElMessage.success('反馈已记录')
+    return
+  }
+
+  feedbackSubmitting.value = true
+  try {
+    await submitChatFeedbackApi({ messageId: message.messageId, feedback })
+    message.feedback = feedback
+    message.feedbackComment = comment
+    feedbackDialogVisible.value = false
     ElMessage.success('反馈已提交')
   } catch (error) {
     ElMessage.error(error.message || '反馈提交失败')
   } finally {
-    sendingFeedbackId.value = ''
+    feedbackSubmitting.value = false
   }
 }
 
@@ -199,16 +225,16 @@ const exportConversation = () => {
                 <el-button
                   text
                   size="small"
-                  :loading="sendingFeedbackId === message.id"
-                  @click="handleFeedback(message, 'like')"
+                  :disabled="feedbackSubmitting"
+                  @click="openFeedbackDialog(message, 'like')"
                 >
                   {{ message.feedback === 'like' ? '已赞' : '赞' }}
                 </el-button>
                 <el-button
                   text
                   size="small"
-                  :loading="sendingFeedbackId === message.id"
-                  @click="handleFeedback(message, 'dislike')"
+                  :disabled="feedbackSubmitting"
+                  @click="openFeedbackDialog(message, 'dislike')"
                 >
                   {{ message.feedback === 'dislike' ? '已踩' : '踩' }}
                 </el-button>
@@ -229,6 +255,33 @@ const exportConversation = () => {
           </div>
         </div>
       </div>
+
+      <el-dialog v-model="feedbackDialogVisible" title="回答反馈" width="420px">
+        <el-form label-position="top">
+          <el-form-item label="反馈类型">
+            <el-radio-group v-model="feedbackForm.type">
+              <el-radio-button label="like">有帮助</el-radio-button>
+              <el-radio-button label="dislike">需改进</el-radio-button>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="补充说明">
+            <el-input
+              v-model="feedbackForm.comment"
+              type="textarea"
+              :rows="4"
+              maxlength="200"
+              show-word-limit
+              placeholder="可补充说明这条回答哪里有帮助，或需要改进的地方"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="feedbackDialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="feedbackSubmitting" @click="confirmFeedback">
+            提交反馈
+          </el-button>
+        </template>
+      </el-dialog>
 
       <div class="input-area">
         <div class="input-avatar"></div>

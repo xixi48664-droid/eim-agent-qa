@@ -26,8 +26,12 @@ const routes = [
     children: [
       {
         path: '',
-        name: 'home',
-        component: () => import('../views/user/Home.vue'),
+        redirect: '/main-chat',
+      },
+      {
+        path: 'main-chat',
+        name: 'main-chat',
+        component: () => import('../views/user/MainChat.vue'),
       },
       {
         path: 'photo-recognition',
@@ -50,9 +54,18 @@ const routes = [
         component: () => import('../views/user/ProcessGuide.vue'),
       },
       {
+        path: 'history-record',
+        name: 'history-record',
+        component: () => import('../views/user/HistoryRecord.vue'),
+      },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('../views/user/ProfileCenter.vue'),
+      },
+      {
         path: 'history',
-        name: 'history',
-        component: () => import('../views/user/History.vue'),
+        redirect: '/history-record',
       },
       {
         path: 'detail',

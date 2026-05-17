@@ -4,6 +4,7 @@ import { ElMessage } from 'element-plus'
 import { recognizeComponentApi, submitRecognitionFeedbackApi } from '../../api/recognition'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
+const MAX_CORRECTION_LENGTH = 200
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp']
 
 const fileInputRef = ref(null)
@@ -130,8 +131,15 @@ const handleFeedback = async (isCorrect) => {
     return
   }
 
-  if (!isCorrect && !correction.value.trim()) {
+  const correctionText = correction.value.trim()
+
+  if (!isCorrect && !correctionText) {
     ElMessage.warning('请填写正确型号或问题说明')
+    return
+  }
+
+  if (!isCorrect && correctionText.length > MAX_CORRECTION_LENGTH) {
+    ElMessage.warning(`反馈内容不能超过 ${MAX_CORRECTION_LENGTH} 个字符`)
     return
   }
 
@@ -140,7 +148,7 @@ const handleFeedback = async (isCorrect) => {
     await submitRecognitionFeedbackApi({
       sessionId: result.value.sessionId,
       isCorrect,
-      correction: correction.value.trim(),
+      correction: correctionText,
     })
     feedbackSubmitted.value = true
     feedbackType.value = isCorrect ? 'correct' : 'incorrect'
@@ -205,10 +213,7 @@ const handleFeedback = async (isCorrect) => {
                 <el-descriptions-item label="元器件ID">{{ result.componentId || '未匹配' }}</el-descriptions-item>
                 <el-descriptions-item label="类型">{{ result.type || '—' }}</el-descriptions-item>
                 <el-descriptions-item label="封装">{{ result.packageType || '—' }}</el-descriptions-item>
-                <el-descriptions-item label="会话ID">{{ result.sessionId }}</el-descriptions-item>
-                <el-descriptions-item label="OCR文本" :span="2">
-                  {{ result.ocrText || '暂无 OCR 文本' }}
-                </el-descriptions-item>
+                <el-descriptions-item label="厂商">{{ result.manufacturer || '—' }}</el-descriptions-item>
               </el-descriptions>
 
               <el-alert
@@ -248,6 +253,8 @@ const handleFeedback = async (isCorrect) => {
                     type="textarea"
                     :rows="3"
                     placeholder="请输入正确型号、器件名称或问题说明"
+                    maxlength="200"
+                    show-word-limit
                   />
                   <el-button
                     type="primary"

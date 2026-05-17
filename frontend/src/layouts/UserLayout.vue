@@ -16,6 +16,7 @@ const menuItems = [
   { index: '/spec-qa', label: '规范问答' },
   { index: '/process-guide', label: '流程指导' },
   { index: '/history-record', label: '历史记录' },
+  { index: '/profile', label: '个人中心' },
 ]
 
 const isAdmin = computed(() => authStore.isAdmin)
@@ -60,6 +61,7 @@ const handleLogout = () => {
       <div class="topbar-actions">
         <span class="welcome">你好，{{ userName }}</span>
         <el-button class="topbar-text-btn" text>帮助</el-button>
+        <el-button class="topbar-text-btn" text @click="router.push('/profile')">个人中心</el-button>
         <el-button class="logout-btn" type="danger" plain @click="handleLogout">退出</el-button>
       </div>
     </el-header>
