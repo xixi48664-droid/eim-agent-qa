@@ -25,6 +25,12 @@ const handleMenuSelect = (index) => {
   }
 }
 
+const goProfile = () => {
+  if (route.name !== 'profile') {
+    router.push({ name: 'profile' })
+  }
+}
+
 const handleLogout = () => {
   authStore.clearAuth()
   router.push('/login')
@@ -59,7 +65,7 @@ const handleLogout = () => {
       <div class="topbar-actions">
         <span class="welcome">你好，{{ userName }}</span>
         <el-button class="topbar-text-btn" text>帮助</el-button>
-        <el-button class="topbar-text-btn" text @click="router.push('/profile')">个人中心</el-button>
+        <el-button class="topbar-text-btn" text @click="goProfile">个人中心</el-button>
         <el-button class="logout-btn" type="danger" plain @click="handleLogout">退出</el-button>
       </div>
     </el-header>

@@ -63,6 +63,10 @@ const routes = [
         component: () => import('../views/user/ProfileCenter.vue'),
       },
       {
+        path: '/profile',
+        redirect: { name: 'profile' },
+      },
+      {
         path: 'history',
         redirect: '/history-record',
       },
