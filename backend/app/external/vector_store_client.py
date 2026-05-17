@@ -31,7 +31,12 @@ class VectorStoreClient:
     def __init__(self):
         self._client = get_qdrant_client()
         self._modelClient = ModelClient()
-        self._ensureCollection()
+        self._available = False
+        try:
+            self._ensureCollection()
+            self._available = True
+        except Exception:
+            self._available = False
 
     def _ensureCollection(self):
         if not self._client.collection_exists(COLLECTION_NAME):
@@ -43,9 +48,13 @@ class VectorStoreClient:
                 ),
             )
 
+    @property
+    def isAvailable(self) -> bool:
+        return self._available
+
     def search(self, query_text: str, top_k: int = 5) -> list:
         """语义检索 — 嵌入查询文本，搜索最相似的向量"""
-        if not query_text or not query_text.strip():
+        if not self._available or not query_text or not query_text.strip():
             return []
 
         embeddings = self._modelClient.embedTexts([query_text.strip()])

@@ -14,6 +14,21 @@ class TutorialRepository:
             Tutorial.process_name == process_name
         ).first()
 
+    def searchByProcessName(self, process_name: str) -> List[Tutorial]:
+        """模糊搜索工序名 — 拆词多关键字匹配"""
+        from sqlalchemy import or_
+        # 拆词：按中英文提取独立关键词
+        import re
+        tokens = re.findall(r'[A-Za-z0-9]+|[一-鿿]{1,4}', process_name)
+        if not tokens:
+            tokens = [process_name]
+        conditions = [Tutorial.process_name.like(f"%{t}%") for t in tokens]
+        return (
+            self._db.query(Tutorial)
+            .filter(or_(*conditions))
+            .all()
+        )
+
     def findById(self, tutorial_id: str) -> Optional[Tutorial]:
         return self._db.query(Tutorial).filter(
             Tutorial.tutorial_id == tutorial_id
