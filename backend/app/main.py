@@ -14,6 +14,7 @@ from app.api.admin_controller import component_router as admin_component_router
 from app.api.admin_controller import standard_router as admin_standard_router
 from app.api.admin_controller import tutorial_router as admin_tutorial_router
 from app.api.admin_controller import monitor_router as admin_monitor_router
+from app.api.admin_controller import knowledge_router as admin_knowledge_router
 from app.api.qa_controller import router as qa_controller_router
 from app.api.qa_controller import chat_router as chat_router
 from app.api.qa_controller import tutorial_guide_router as tutorial_guide_router
@@ -53,6 +54,7 @@ app.include_router(admin_component_router)
 app.include_router(admin_standard_router)
 app.include_router(admin_tutorial_router)
 app.include_router(admin_monitor_router)
+app.include_router(admin_knowledge_router)
 app.include_router(qa_controller_router)
 app.include_router(chat_router)
 app.include_router(tutorial_guide_router)

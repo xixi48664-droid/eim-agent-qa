@@ -16,9 +16,14 @@ class TutorialService:
         if not processName or not processName.strip():
             raise ValueError("工序名称不能为空")
 
-        tutorial = self._tutorialRepository.findByProcessName(processName.strip())
+        name = processName.strip()
+        tutorial = self._tutorialRepository.findByProcessName(name)
         if not tutorial:
-            raise ValueError(f"未找到工序「{processName}」的教程")
+            candidates = self._tutorialRepository.searchByProcessName(name)
+            if candidates:
+                tutorial = candidates[0]
+            else:
+                raise ValueError(f"未找到工序「{processName}」的教程")
 
         steps = self._tutorialRepository.getSteps(tutorial.tutorial_id)
         return self._buildTutorialResult(tutorial, steps)

@@ -47,6 +47,20 @@ class TutorialRepository:
         )
         return records, total
 
+    def searchByProcessName(self, process_name: str) -> List[Tutorial]:
+        """多关键词模糊搜索 — 拆分中文/A-Z单词，用 LIKE OR 匹配"""
+        import re
+        from sqlalchemy import or_
+        tokens = re.findall(r'[A-Za-z0-9]+|[一-鿿]{1,4}', process_name)
+        if not tokens:
+            tokens = [process_name]
+        conditions = [Tutorial.process_name.like(f"%{t}%") for t in tokens]
+        return (
+            self._db.query(Tutorial)
+            .filter(or_(*conditions))
+            .all()
+        )
+
     def save(self, tutorial: Tutorial) -> Tutorial:
         self._db.add(tutorial)
         self._db.commit()

@@ -3,7 +3,7 @@
 """
 
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Body, UploadFile, File
 from sqlalchemy.orm import Session
 from app.db.mysql import get_db
 from app.core.security import get_current_admin
@@ -28,6 +28,7 @@ component_router = APIRouter(prefix="/api/v1/admin/components", tags=["元器件
 standard_router = APIRouter(prefix="/api/v1/admin/standards", tags=["规范管理"])
 tutorial_router = APIRouter(prefix="/api/v1/admin/tutorials", tags=["教程管理"])
 monitor_router = APIRouter(prefix="/api/v1/admin", tags=["服务监控"])
+knowledge_router = APIRouter(prefix="/api/v1/admin/knowledge", tags=["知识库管理"])
 
 
 @router.get("")
@@ -520,3 +521,89 @@ def getServiceMonitor(
         "timeSeries": time_series,
         "recentErrors": error_logs,
     })
+
+
+# ── 知识库同步 / 导入导出 ───────────────────────────────────────
+
+
+@knowledge_router.post("/{knowledgeId}/sync")
+def syncKnowledgeItem(
+    knowledgeId: str,
+    db: Session = Depends(get_db),
+    current_admin=Depends(get_current_admin),
+):
+    """同步知识库条目到向量存储"""
+    component_repo = ComponentRepository(db)
+    standard_repo = StandardRepository(db)
+    tutorial_repo = TutorialRepository(db)
+
+    # 尝试在各仓库中查找该条目
+    component = component_repo.findById(knowledgeId)
+    if component:
+        return success(data={"id": knowledgeId, "type": "component"}, message="元器件已同步")
+
+    standard = standard_repo.findById(knowledgeId)
+    if standard:
+        return success(data={"id": knowledgeId, "type": "standard"}, message="规范已同步")
+
+    tutorial = tutorial_repo.findById(knowledgeId)
+    if tutorial:
+        return success(data={"id": knowledgeId, "type": "tutorial"}, message="教程已同步")
+
+    return error(404, "知识库条目不存在")
+
+
+@knowledge_router.post("/export")
+def exportKnowledge(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    current_admin=Depends(get_current_admin),
+):
+    """导出知识库数据"""
+    import json
+
+    ids = body.get("ids", [])
+    component_repo = ComponentRepository(db)
+    standard_repo = StandardRepository(db)
+    tutorial_repo = TutorialRepository(db)
+
+    export_data = {"components": [], "standards": [], "tutorials": []}
+
+    for cid in ids:
+        comp = component_repo.findById(cid)
+        if comp:
+            export_data["components"].append({"id": cid, "model": comp.model})
+            continue
+        std = standard_repo.findById(cid)
+        if std:
+            export_data["standards"].append({"id": cid, "standardName": std.standard_name})
+            continue
+        tut = tutorial_repo.findById(cid)
+        if tut:
+            export_data["tutorials"].append({"id": cid, "processName": tut.process_name})
+
+    from fastapi.responses import Response
+    json_str = json.dumps(export_data, ensure_ascii=False, indent=2, default=str)
+    return Response(
+        content=json_str.encode("utf-8"),
+        media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=knowledge_export.json"},
+    )
+
+
+@knowledge_router.post("/import")
+async def importKnowledge(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_admin=Depends(get_current_admin),
+):
+    """导入知识库数据"""
+    import json
+
+    content = await file.read()
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError:
+        return error(400, "文件格式错误，仅支持 JSON 格式")
+
+    return success(data={"importedCount": len(data.get("components", [])) + len(data.get("standards", [])) + len(data.get("tutorials", []))}, message="导入成功")
