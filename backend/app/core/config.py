@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     DASHSCOPE_BASE_URL: str = "https://dashscope.aliyuncs.com/api/v1"
     DASHSCOPE_MODEL_VL: str = "qwen-vl-max"
     DASHSCOPE_MODEL_TEXT: str = "qwen-max"
-    DASHSCOPE_MODEL_EMBEDDING: str = "text-embedding-v3"
+    DASHSCOPE_MODEL_EMBEDDING: str = "text-embedding-v4"
 
     model_config = {
         "env_file": _env_file,

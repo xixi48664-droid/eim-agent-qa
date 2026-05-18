@@ -19,11 +19,12 @@ class TutorialService:
         name = processName.strip()
         tutorial = self._tutorialRepository.findByProcessName(name)
         if not tutorial:
+            # 精确匹配失败，尝试模糊搜索
             candidates = self._tutorialRepository.searchByProcessName(name)
             if candidates:
                 tutorial = candidates[0]
             else:
-                raise ValueError(f"未找到工序「{processName}」的教程")
+                raise ValueError(f"未找到工序「{name}」的教程")
 
         steps = self._tutorialRepository.getSteps(tutorial.tutorial_id)
         return self._buildTutorialResult(tutorial, steps)

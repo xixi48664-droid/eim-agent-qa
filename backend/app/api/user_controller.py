@@ -2,7 +2,7 @@
 认证接口 — 对应设计文档 4.1 UserController 类
 """
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.db.mysql import get_db
 from app.repositories.user_repository import UserRepository
@@ -118,23 +118,6 @@ def resetPasswordByToken(
         return success(message="密码重置成功，请使用新密码登录")
     except ValueError as e:
         return error(400, str(e))
-
-
-@router.get("/detail")
-def getUserDetail(
-    userId: str = Query(..., description="用户ID"),
-    db: Session = Depends(get_db),
-):
-    """查询用户详情"""
-    user_repo = UserRepository(db)
-    log_repo = HistoryRepository(db)
-    user_service = UserService(user_repo)
-
-    try:
-        result = user_service.getUserById(userId, log_repo)
-        return success(data=result.model_dump(), message="查询成功")
-    except ValueError as e:
-        return error(404, str(e))
 
 
 # ── 个人中心接口 ────────────────────────────────────────────

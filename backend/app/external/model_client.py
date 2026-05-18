@@ -77,13 +77,14 @@ class ModelClient:
         body = {
             "model": settings.DASHSCOPE_MODEL_EMBEDDING,
             "input": {"texts": texts},
+            "parameters": {"dimensions": 1024, "text_type": "document"},
         }
         url = f"{self._baseUrl}/services/embeddings/text-embedding/text-embedding"
         headers = {
             "Authorization": f"Bearer {self._apiKey}",
             "Content-Type": "application/json",
         }
-        with httpx.Client(timeout=30) as client:
+        with httpx.Client(timeout=60) as client:
             response = client.post(url, json=body, headers=headers)
         if response.status_code != 200:
             raise RuntimeError(f"Embedding API error: {response.text}")

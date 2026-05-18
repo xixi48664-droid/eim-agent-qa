@@ -1,0 +1,168 @@
+# ═══════════════════════════════════════════
+# 批量搜索关键词 — 覆盖主要电子元器件品类
+# 每个关键词搜索最多 50 条结果
+# ═══════════════════════════════════════════
+
+# ── MCU / MPU 系列 (每个系列搜50条) ──
+STM32
+ESP32
+ATmega
+ATtiny
+PIC16
+PIC18
+PIC32
+MSP430
+nRF52
+nRF53
+LPC11
+LPC17
+Kinetis
+i.MX
+Raspberry Pi RP2040
+GD32
+AT32
+HC32
+MM32
+
+# ── 电源管理 IC ──
+buck converter
+boost converter
+LDO voltage regulator
+battery charger IC
+PMIC
+USB power delivery controller
+load switch
+hot swap controller
+voltage reference
+current regulator
+
+# ── 传感器 ──
+temperature sensor digital
+humidity sensor
+pressure sensor
+accelerometer 3-axis
+gyroscope
+magnetometer
+IMU sensor
+ToF sensor
+ambient light sensor
+gas sensor
+hall effect sensor
+current sensor
+
+# ── 通信接口 ──
+RS485 transceiver
+RS232 transceiver
+CAN transceiver
+USB to UART bridge
+Ethernet PHY
+I2C isolator
+digital isolator
+LIN transceiver
+USB hub controller
+PCIe bridge
+
+# ── 存储器 ──
+NOR Flash SPI
+NAND Flash
+EEPROM I2C
+SRAM parallel
+DRAM DDR3
+FRAM
+MRAM
+
+# ── 运放 / 比较器 / 仪表放大器 ──
+operational amplifier
+comparator
+instrumentation amplifier
+current sense amplifier
+differential amplifier
+audio amplifier
+
+# ── ADC / DAC ──
+ADC 12-bit
+ADC 16-bit
+ADC 24-bit
+DAC 12-bit
+DAC 16-bit
+analog front end
+
+# ── 逻辑 IC ──
+logic gate
+shift register
+multiplexer
+buffer driver
+flip flop
+level translator
+bus transceiver
+
+# ── MOSFET ──
+N-channel MOSFET
+P-channel MOSFET
+N+P MOSFET pair
+GaN FET
+SiC MOSFET
+
+# ── 二极管 ──
+Schottky diode
+Zener diode
+TVS diode
+rectifier diode
+ESD protection diode
+bridge rectifier
+switching diode
+PIN diode
+
+# ── 晶振 / 时钟 ──
+crystal 8MHz
+crystal 32.768kHz
+TCXO
+MEMS oscillator
+RTC real time clock
+clock buffer
+clock generator
+PLL frequency synthesizer
+
+# ── 连接器 ──
+USB Type-C connector
+pin header 2.54mm
+FFC FPC connector
+RJ45 connector
+board to board connector
+wire to board connector
+SD card connector
+HDMI connector
+
+# ── LED / 光耦 / 光电器件 ──
+LED SMD
+RGB LED
+infrared LED
+optocoupler
+phototransistor
+ambient light sensor
+
+# ── 电阻 ──
+chip resistor 0603
+chip resistor 0805
+current sense resistor
+thermistor NTC
+varistor
+
+# ── 电容 ──
+ceramic capacitor 0603
+ceramic capacitor 0805
+tantalum capacitor
+aluminum electrolytic capacitor
+supercapacitor
+MLCC
+
+# ── 电感 / 磁珠 ──
+power inductor SMD
+ferrite bead
+common mode choke
+RF inductor
+
+# ── 保险丝 / 电路保护 ──
+PTC resettable fuse
+SMD fuse
+gas discharge tube

@@ -193,20 +193,33 @@ def _buildQaResponse(result: dict, session_id: str) -> dict:
         total = r.get("total", 0)
         records = r.get("records", [])
         if records:
-            lines = [f"找到 {total} 个相关元器件："]
-            for rec in records[:5]:
-                lines.append(
-                    f"- {rec.get('model', '')} "
-                    f"({rec.get('type', '')} | {rec.get('manufacturer', '')} "
-                    f"| {rec.get('packageType', '')})"
-                )
-            answer = "\n".join(lines)
+            generated = r.get("answer", "")
+            if generated:
+                answer = generated
+            else:
+                lines = [f"找到 {total} 个相关元器件："]
+                for rec in records[:5]:
+                    lines.append(
+                        f"- {rec.get('model', '')} "
+                        f"({rec.get('type', '')} | {rec.get('manufacturer', '')} "
+                        f"| {rec.get('packageType', '')})"
+                    )
+                answer = "\n".join(lines)
+
             for rec in records[:3]:
                 sources.append(SourceInfo(
                     sourceType="component",
                     sourceId=rec.get("componentId", ""),
                     sourceTitle=rec.get("model", ""),
                     contentSnippet=f"{rec.get('type', '')} {rec.get('manufacturer', '')}",
+                ))
+            ds_snippets = r.get("datasheetSnippets", "")
+            if ds_snippets:
+                sources.append(SourceInfo(
+                    sourceType="datasheet",
+                    sourceId=records[0].get("componentId", ""),
+                    sourceTitle=f"{records[0].get('model', '')} datasheet",
+                    contentSnippet=ds_snippets[:500],
                 ))
             recommended = [f"{rec.get('model', '')}的详细参数？" for rec in records[:3]]
         else:
